@@ -1,0 +1,36 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 yamahubuki, ACT Laboratory
+#
+# DASH 独自の点検 (VSU からコピーしたほかのワークフローとは別のファイル)。
+# 本物の NVDA やモデルが無くても動くものだけを、push とプルリクエストのたびに実行する。
+name: checks
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python (same version as NVDA 2026.1)
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Syntax check (all Python files)
+        run: python -m compileall -q addon aivis_core scripts buildVars.py
+
+      - name: Translations (untranslated or mismatched placeholders)
+        run: python scripts/i18n.py check
+
+      - name: Progress dialog re-entrancy test
+        run: python scripts/test_progress_dialog.py

@@ -1,0 +1,688 @@
+# DASH (Direct Aivis Streaming Handler) translation.
+# This file is distributed under the same license as the DASH package (AGPL-3.0-or-later).
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: DASH\n"
+"Report-Msgid-Bugs-To: https://github.com/actlaboratory/DASH/issues\n"
+"Language: ja\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: addon/globalPlugins/DASH/__init__.py:179
+msgid "Download voice models (AivisHub)"
+msgstr "音声モデルをダウンロード (AivisHub)"
+
+#: addon/globalPlugins/DASH/__init__.py:189
+msgid "&Sort by:"
+msgstr "並び順(&S):"
+
+#: addon/globalPlugins/DASH/__init__.py:192
+msgid "&Keyword:"
+msgstr "キーワード(&K):"
+
+#: addon/globalPlugins/DASH/__init__.py:194
+msgid "&Find"
+msgstr "検索(&F)"
+
+#: addon/globalPlugins/DASH/__init__.py:196
+msgid "&Models (press Space to preview):"
+msgstr "モデル(&M) (スペースキーで試聴):"
+
+#: addon/globalPlugins/DASH/__init__.py:201
+msgid "S&tyles (press Space or Enter to preview):"
+msgstr "スタイルの試聴(&T) (スペースキーかエンターで試聴):"
+
+#: addon/globalPlugins/DASH/__init__.py:206
+msgid "Details and l&icense:"
+msgstr "詳細とライセンス(&I):"
+
+#: addon/globalPlugins/DASH/__init__.py:209
+msgid "&Preview"
+msgstr "試聴(&P)"
+
+#: addon/globalPlugins/DASH/__init__.py:211
+msgid "&Download"
+msgstr "ダウンロード(&D)"
+
+#: addon/globalPlugins/DASH/__init__.py:213
+msgid "Close"
+msgstr "閉じる"
+
+#: addon/globalPlugins/DASH/__init__.py:261 addon/globalPlugins/DASH/__init__.py:235
+msgid "No preview audio is available"
+msgstr "試聴用の音声はありません"
+
+#: addon/globalPlugins/DASH/__init__.py:268
+msgid "Could not play the preview audio"
+msgstr "試聴用の音声を再生できませんでした"
+
+#: addon/globalPlugins/DASH/__init__.py:277
+msgid "Loading..."
+msgstr "読み込み中..."
+
+#: addon/globalPlugins/DASH/__init__.py:300
+msgid "No models found"
+msgstr "見つかりませんでした"
+
+#: addon/globalPlugins/DASH/__init__.py:311
+msgid "Could not connect to AivisHub"
+msgstr "AivisHub に接続できませんでした"
+
+#: addon/globalPlugins/DASH/__init__.py:316
+#, python-brace-format
+msgid "{name} ({author}) {license} {size} MB"
+msgstr "{name} ({author}) {license} {size} MB"
+
+#: addon/globalPlugins/DASH/__init__.py:320
+msgid " [installed]"
+msgstr " [インストール済み]"
+
+#. Translators: separator between style names of a speaker
+#: addon/globalPlugins/DASH/__init__.py:334
+msgid ", "
+msgstr "、"
+
+#: addon/globalPlugins/DASH/__init__.py:336
+#, python-brace-format
+msgid ""
+"{name}\n"
+"Author: {author}\n"
+"Category: {category} / Voice: {timbre}\n"
+"Version: {version} / Size: {size} MB / Downloads: {downloads} / Likes: {likes}\n"
+"\n"
+"Speakers and styles:\n"
+"{speakers}\n"
+"\n"
+"Description:\n"
+"{description}\n"
+"\n"
+"License: {license}\n"
+"\n"
+"{license_text}"
+msgstr ""
+"{name}\n"
+"作者: {author}\n"
+"カテゴリー: {category} / 声: {timbre}\n"
+"版: {version} / 大きさ: {size} MB / ダウンロード数: {downloads} / いいね: {likes}\n"
+"\n"
+"話者とスタイル:\n"
+"{speakers}\n"
+"\n"
+"説明:\n"
+"{description}\n"
+"\n"
+"ライセンス: {license}\n"
+"\n"
+"{license_text}"
+
+#: addon/globalPlugins/DASH/__init__.py:354
+#, python-brace-format
+msgid ""
+"\"{name}\" ({author}) will be downloaded (about {size} MB).\n"
+"\n"
+"License: {license}\n"
+"You can read the full license text in \"Details and license\". Please use the model in accordance with its license terms.\n"
+"\n"
+"Do you agree to the license and download the model?"
+msgstr ""
+"「{name}」({author}) をダウンロードします (約 {size} MB)。\n"
+"\n"
+"ライセンス: {license}\n"
+"ライセンスの本文は「詳細とライセンス」で読めます。ライセンスの条件に従って使ってください。\n"
+"\n"
+"ライセンスに同意してダウンロードしますか？"
+
+#: addon/globalPlugins/DASH/__init__.py:361
+msgid "Download voice model"
+msgstr "音声モデルのダウンロード"
+
+#: addon/globalPlugins/DASH/__init__.py:364
+msgid "Downloading voice model"
+msgstr "音声モデルをダウンロード中"
+
+#: addon/globalPlugins/DASH/__init__.py:364 addon/globalPlugins/DASH/__init__.py:584 addon/globalPlugins/DASH/__init__.py:693 addon/globalPlugins/DASH/updaterStrings.py:26
+msgid "Connecting"
+msgstr "接続中"
+
+#: addon/globalPlugins/DASH/__init__.py:375 addon/globalPlugins/DASH/__init__.py:595
+#, python-brace-format
+msgid "Downloading {name}... {done:.0f} / {total:.0f} MB"
+msgstr "{name} をダウンロード中... {done:.0f} / {total:.0f} MB"
+
+#: addon/globalPlugins/DASH/__init__.py:388 addon/globalPlugins/DASH/__init__.py:555 addon/globalPlugins/DASH/__init__.py:611 addon/globalPlugins/DASH/__init__.py:719 addon/globalPlugins/DASH/updaterStrings.py:11 addon/synthDrivers/dash.py:121 addon/synthDrivers/dash.py:123
+msgid "Error"
+msgstr "エラー"
+
+#: addon/globalPlugins/DASH/__init__.py:388
+#, python-brace-format
+msgid ""
+"An error occurred while downloading:\n"
+"{e}"
+msgstr ""
+"ダウンロード中にエラーが発生しました:\n"
+"{e}"
+
+#: addon/globalPlugins/DASH/__init__.py:396
+#, python-brace-format
+msgid ""
+"\"{name}\" has been added to the voice list. You can select it under \"Voice\" in NVDA's speech settings."
+msgstr "「{name}」を声の一覧に追加しました。NVDA の音声の設定の「声」で選べます。"
+
+#: addon/globalPlugins/DASH/__init__.py:398
+#, python-brace-format
+msgid ""
+"\"{name}\" has been downloaded. It will be added to the DASH voice list."
+msgstr "「{name}」をダウンロードしました。DASH の声の一覧に追加されます。"
+
+#: addon/globalPlugins/DASH/__init__.py:399
+msgid "Download complete"
+msgstr "ダウンロード完了"
+
+#: addon/globalPlugins/DASH/__init__.py:413 addon/globalPlugins/DASH/__init__.py:480
+msgid "DASH"
+msgstr "DASH"
+
+#: addon/globalPlugins/DASH/__init__.py:441
+msgid "Toggles update checking on startup."
+msgstr "起動時のアップデートチェックを切り替えます。"
+
+#: addon/globalPlugins/DASH/__init__.py:444
+msgid "Check for updates"
+msgstr "アップデートを確認"
+
+#: addon/globalPlugins/DASH/__init__.py:444
+msgid "Checks for new updates manually."
+msgstr "手動でアップデートをチェックします。"
+
+#: addon/globalPlugins/DASH/__init__.py:450
+msgid "Download voice &models..."
+msgstr "音声モデルをダウンロード(&M)..."
+
+#: addon/globalPlugins/DASH/__init__.py:451
+msgid "Choose a voice model on AivisHub, download it and add its voices."
+msgstr "AivisHub の音声合成モデルを選んでダウンロードし、声を追加します。"
+
+#: addon/globalPlugins/DASH/__init__.py:455
+msgid "R&emove voice models..."
+msgstr "音声モデルを削除(&X)..."
+
+#: addon/globalPlugins/DASH/__init__.py:455
+msgid "Removes voice models that you downloaded (or placed yourself)."
+msgstr "ダウンロードした (または自分で置いた) 音声合成モデルを削除します。"
+
+#: addon/globalPlugins/DASH/__init__.py:462
+msgid "Install AivisSpeech &dictionaries..."
+msgstr "AivisSpeech の辞書をインストール(&D)..."
+
+#: addon/globalPlugins/DASH/__init__.py:463
+msgid ""
+"Downloads the AivisSpeech Engine dictionaries (readings of proper nouns and more) from GitHub."
+msgstr "AivisSpeech Engine の辞書 (固有名詞などの読み) を GitHub からダウンロードします。"
+
+#: addon/globalPlugins/DASH/__init__.py:467
+msgid "Remo&ve AivisSpeech dictionaries..."
+msgstr "AivisSpeech の辞書を削除(&L)..."
+
+#: addon/globalPlugins/DASH/__init__.py:467
+msgid "Removes the downloaded AivisSpeech dictionaries."
+msgstr "ダウンロードした AivisSpeech の辞書を削除します。"
+
+#: addon/globalPlugins/DASH/__init__.py:474
+msgid "Install CUDA &acceleration..."
+msgstr "CUDA 加速をインストール(&I)..."
+
+#: addon/globalPlugins/DASH/__init__.py:475
+msgid ""
+"Downloads the libraries for speech synthesis on an NVIDIA GPU. They take effect after NVDA is restarted."
+msgstr "NVIDIA GPU で音声合成するためのライブラリをダウンロードします。NVDA の再起動後に有効になります。"
+
+#: addon/globalPlugins/DASH/__init__.py:478
+msgid "Remove CUDA acce&leration..."
+msgstr "CUDA 加速を削除(&R)..."
+
+#: addon/globalPlugins/DASH/__init__.py:478
+msgid "Removes the downloaded CUDA acceleration libraries."
+msgstr "ダウンロードした CUDA 加速ライブラリを削除します。"
+
+#: addon/globalPlugins/DASH/__init__.py:485
+msgid "Disable update checking on startup"
+msgstr "起動時のアップデートチェックを無効化"
+
+#: addon/globalPlugins/DASH/__init__.py:486
+msgid "Enable update checking on startup"
+msgstr "起動時のアップデートチェックを有効化"
+
+#: addon/globalPlugins/DASH/__init__.py:492
+msgid "Updates will be checked when NVDA starts."
+msgstr "NVDAを起動するときにアップデートがチェックされます。"
+
+#: addon/globalPlugins/DASH/__init__.py:494
+msgid "Updates will not be checked when NVDA starts."
+msgstr "NVDAを起動するときにアップデートはチェックされません。"
+
+#: addon/globalPlugins/DASH/__init__.py:496
+msgid "Settings changed"
+msgstr "設定変更完了"
+
+#: addon/globalPlugins/DASH/__init__.py:530
+msgid ""
+"There are no voice models that can be removed (bundled models and AivisSpeech models cannot be removed)."
+msgstr "削除できる音声モデルはありません (同梱のモデルと AivisSpeech のモデルは削除できません)。"
+
+#: addon/globalPlugins/DASH/__init__.py:536
+msgid "Choose the voice model to remove."
+msgstr "削除する音声モデルを選んでください。"
+
+#: addon/globalPlugins/DASH/__init__.py:536 addon/globalPlugins/DASH/__init__.py:560 addon/globalPlugins/DASH/__init__.py:531 addon/globalPlugins/DASH/__init__.py:547
+msgid "Remove voice model"
+msgstr "音声モデルの削除"
+
+#: addon/globalPlugins/DASH/__init__.py:546
+#, python-brace-format
+msgid ""
+"\"{name}\" will be removed.\n"
+"Do you want to continue?"
+msgstr ""
+"「{name}」を削除します。\n"
+"続行しますか？"
+
+#: addon/globalPlugins/DASH/__init__.py:555
+#, python-brace-format
+msgid ""
+"Could not remove the voice model:\n"
+"{e}"
+msgstr ""
+"削除できませんでした:\n"
+"{e}"
+
+#: addon/globalPlugins/DASH/__init__.py:560
+#, python-brace-format
+msgid "\"{name}\" has been removed."
+msgstr "「{name}」を削除しました。"
+
+#: addon/globalPlugins/DASH/__init__.py:570
+#, python-brace-format
+msgid ""
+"The AivisSpeech Engine dictionaries ({n} files: readings and accents of proper nouns, technical terms and more) will be downloaded directly from the AivisSpeech Engine repository on GitHub and installed.\n"
+"\n"
+"Download: about {mb:.0f}MB\n"
+"These are the dictionaries included in the AivisSpeech Engine (LGPL-3.0) repository. The sources and licenses of the dictionaries follow AivisSpeech Engine.\n"
+msgstr ""
+"AivisSpeech Engine の辞書 ({n} 個。固有名詞・専門用語などの読みとアクセント) を、AivisSpeech Engine の GitHub から直接ダウンロードしてインストールします。\n"
+"\n"
+"ダウンロード: 約 {mb:.0f}MB\n"
+"辞書は AivisSpeech Engine (LGPL-3.0) のリポジトリに含まれているものです。各辞書の出典・ライセンスは AivisSpeech Engine に準じます。\n"
+
+#: addon/globalPlugins/DASH/__init__.py:579 addon/globalPlugins/DASH/__init__.py:688
+msgid ""
+"\n"
+"(Already installed. It will be reinstalled.)\n"
+msgstr ""
+"\n"
+"(すでにインストールされています。入れ直します。)\n"
+
+#: addon/globalPlugins/DASH/__init__.py:580 addon/globalPlugins/DASH/__init__.py:689
+msgid "Do you want to continue?"
+msgstr "続行しますか？"
+
+#: addon/globalPlugins/DASH/__init__.py:581
+msgid "Install AivisSpeech dictionaries"
+msgstr "AivisSpeech の辞書のインストール"
+
+#: addon/globalPlugins/DASH/__init__.py:584
+msgid "Installing AivisSpeech dictionaries"
+msgstr "AivisSpeech の辞書をインストール中"
+
+#: addon/globalPlugins/DASH/__init__.py:611 addon/globalPlugins/DASH/__init__.py:719
+#, python-brace-format
+msgid ""
+"An error occurred while installing:\n"
+"{e}"
+msgstr ""
+"インストール中にエラーが発生しました:\n"
+"{e}"
+
+#: addon/globalPlugins/DASH/__init__.py:619
+msgid ""
+"The AivisSpeech dictionaries have been installed. They will be used from the next utterance."
+msgstr "AivisSpeech の辞書をインストールしました。次の読み上げから使われます。"
+
+#: addon/globalPlugins/DASH/__init__.py:622
+msgid ""
+"The AivisSpeech dictionaries have been installed. They will be used after NVDA is restarted."
+msgstr "AivisSpeech の辞書をインストールしました。NVDA の再起動後に使われます。"
+
+#: addon/globalPlugins/DASH/__init__.py:633
+msgid "The AivisSpeech dictionaries are not installed."
+msgstr "AivisSpeech の辞書はインストールされていません。"
+
+#: addon/globalPlugins/DASH/__init__.py:633
+msgid "AivisSpeech dictionaries"
+msgstr "AivisSpeech の辞書"
+
+#: addon/globalPlugins/DASH/__init__.py:636
+msgid ""
+"The downloaded AivisSpeech dictionaries will be removed.\n"
+"Do you want to continue?"
+msgstr ""
+"ダウンロードした AivisSpeech の辞書を削除します。\n"
+"続行しますか？"
+
+#: addon/globalPlugins/DASH/__init__.py:637 addon/globalPlugins/DASH/__init__.py:654 addon/globalPlugins/DASH/__init__.py:656
+msgid "Remove AivisSpeech dictionaries"
+msgstr "AivisSpeech の辞書の削除"
+
+#: addon/globalPlugins/DASH/__init__.py:654
+msgid "The AivisSpeech dictionaries have been removed."
+msgstr "AivisSpeech の辞書を削除しました。"
+
+#: addon/globalPlugins/DASH/__init__.py:671
+msgid ""
+"The NVIDIA GPU driver was not found. CUDA acceleration can only be used with an NVIDIA GPU."
+msgstr "NVIDIA の GPU ドライバが見つかりません。CUDA 加速は NVIDIA の GPU でのみ使えます。"
+
+#: addon/globalPlugins/DASH/__init__.py:672 addon/globalPlugins/DASH/__init__.py:743
+msgid "CUDA acceleration"
+msgstr "CUDA 加速"
+
+#: addon/globalPlugins/DASH/__init__.py:679
+#, python-brace-format
+msgid ""
+"The CUDA acceleration libraries (onnxruntime-gpu 1.20.1, CUDA 11.8, cuDNN 8.9) for speech synthesis on an NVIDIA GPU will be downloaded and installed.\n"
+"\n"
+"Download: about {dl:.1f}GB / Disk space required: about {inst:.1f}GB\n"
+"Sources: Microsoft (onnxruntime), NVIDIA (PyPI), zlib (winimage)\n"
+"The RTX 50 series is not supported.\n"
+"\n"
+"After installation, restart NVDA and \"Use GPU\" in the speech settings will be turned on.\n"
+msgstr ""
+"NVIDIA GPU で音声合成するための CUDA 加速ライブラリ (onnxruntime-gpu 1.20.1, CUDA 11.8, cuDNN 8.9) をダウンロードしてインストールします。\n"
+"\n"
+"ダウンロード: 約 {dl:.1f}GB / 必要なディスク容量: 約 {inst:.1f}GB\n"
+"配布元: Microsoft (onnxruntime)、NVIDIA (PyPI)、zlib (winimage)\n"
+"RTX 50 シリーズには対応していません。\n"
+"\n"
+"インストール後に NVDA を再起動すると、音声の設定の「GPU を使う」がオンになります。\n"
+
+#: addon/globalPlugins/DASH/__init__.py:690
+msgid "Install CUDA acceleration"
+msgstr "CUDA 加速のインストール"
+
+#: addon/globalPlugins/DASH/__init__.py:693
+msgid "Installing CUDA acceleration"
+msgstr "CUDA 加速をインストール中"
+
+#: addon/globalPlugins/DASH/__init__.py:705
+#, python-brace-format
+msgid "Downloading {label}... {done:.0f} / {total:.0f} MB"
+msgstr "{label} をダウンロード中... {done:.0f} / {total:.0f} MB"
+
+#: addon/globalPlugins/DASH/__init__.py:730
+msgid ""
+"CUDA acceleration has been installed. It will take effect after NVDA is restarted.\n"
+"Restart NVDA now?"
+msgstr ""
+"CUDA 加速のインストールが完了しました。NVDA を再起動すると有効になります。\n"
+"今すぐ再起動しますか？"
+
+#: addon/globalPlugins/DASH/__init__.py:731 addon/globalPlugins/DASH/__init__.py:619 addon/globalPlugins/DASH/__init__.py:622
+msgid "Installation complete"
+msgstr "インストール完了"
+
+#: addon/globalPlugins/DASH/__init__.py:743
+msgid "CUDA acceleration is not installed."
+msgstr "CUDA 加速はインストールされていません。"
+
+#: addon/globalPlugins/DASH/__init__.py:746
+msgid ""
+"The CUDA acceleration libraries will be removed. Files in use will be removed after NVDA is restarted.\n"
+"Do you want to continue?"
+msgstr ""
+"CUDA 加速ライブラリを削除します。使用中のファイルは NVDA の再起動後に削除されます。\n"
+"続行しますか？"
+
+#: addon/globalPlugins/DASH/__init__.py:756 addon/globalPlugins/DASH/__init__.py:656
+msgid "It will be removed after NVDA is restarted."
+msgstr "NVDA の再起動後に削除されます。"
+
+#: addon/globalPlugins/DASH/__init__.py:756 addon/globalPlugins/DASH/__init__.py:747
+msgid "Remove CUDA acceleration"
+msgstr "CUDA 加速の削除"
+
+#: addon/globalPlugins/DASH/updaterStrings.py:12
+msgid ""
+"Unable to connect to update server.\n"
+"Check your internet connection."
+msgstr "アップデートサーバーに接続できません。インターネット接続を確認してください。"
+
+#: addon/globalPlugins/DASH/updaterStrings.py:13
+msgid "Unable to connect to update server."
+msgstr "アップデートサーバーに接続できません。"
+
+#: addon/globalPlugins/DASH/updaterStrings.py:14
+msgid ""
+"The update information is invalid.\n"
+"Please contact ACT Laboratory for further information."
+msgstr "アップデート情報が不正です。詳細については、 ACT Laboratory までお問い合わせください。"
+
+#: addon/globalPlugins/DASH/updaterStrings.py:15
+msgid "The request parameter is invalid. Please contact the developer."
+msgstr "リクエストパラメータが不正です。開発者までお問い合わせください。"
+
+#: addon/globalPlugins/DASH/updaterStrings.py:16
+msgid "Error downloading add-on update."
+msgstr "アドオンの更新をダウンロード中にエラーが発生しました。"
+
+#: addon/globalPlugins/DASH/updaterStrings.py:17
+#, python-format
+msgid ""
+"Failed to open add-on package file at %s - missing file or invalid file format"
+msgstr "%s のアドオンパッケージを開けませんでした。ファイルが無いか、形式が正しくありません。"
+
+#: addon/globalPlugins/DASH/updaterStrings.py:18
+#, python-format
+msgid "Failed to update add-on  from %s."
+msgstr "%s からのアドオンの更新に失敗しました。"
+
+#: addon/globalPlugins/DASH/updaterStrings.py:19
+msgid ""
+"No updates found.\n"
+"You are using the latest version."
+msgstr "アップデートは見つかりませんでした。最新版をお使いです。"
+
+#: addon/globalPlugins/DASH/updaterStrings.py:20
+msgid "The updater is not registered. Please contact the developer."
+msgstr "アップデーターが登録されていません。開発者までお問い合わせください。"
+
+#: addon/globalPlugins/DASH/updaterStrings.py:21
+msgid ""
+"An update was found, but updating from the current version is not possible. Please visit the software's website. "
+msgstr "アップデートが見つかりましたが、現在のバージョンから直接更新することはできません。ソフトウェアページから手動で更新してください。"
+
+#: addon/globalPlugins/DASH/updaterStrings.py:22
+msgid "Update check"
+msgstr "アップデートチェック"
+
+#: addon/globalPlugins/DASH/updaterStrings.py:23
+msgid "Update confirmation"
+msgstr "アップデート確認"
+
+#: addon/globalPlugins/DASH/updaterStrings.py:24
+#, python-brace-format
+msgid ""
+"{summary} Ver.{newVersion} is available.\n"
+"Would you like to update?\n"
+"Current version: {currentVersion}\n"
+"New version: {newVersion}"
+msgstr ""
+"{summary} Ver.{newVersion}が利用可能です。\n"
+"アップデートしますか？\n"
+"現在のバージョン: {currentVersion}\n"
+"新しいバージョン: {newVersion}"
+
+#: addon/globalPlugins/DASH/updaterStrings.py:25
+msgid "Downloading add-on update"
+msgstr "アドオンの更新をダウンロードしています"
+
+#: addon/globalPlugins/DASH/updaterStrings.py:27
+msgid "Updating add-on"
+msgstr "アドオンを更新中"
+
+#: addon/globalPlugins/DASH/updaterStrings.py:28
+msgid "Please wait while the add-on is being updated."
+msgstr "アドオンが更新されるまでお待ちください。"
+
+#: addon/synthDrivers/_aivis/__init__.py:263
+msgid "The BERT model (model.onnx) was not found. Please reinstall DASH."
+msgstr "BERT モデル (model.onnx) が見つかりません。DASH を入れ直してください。"
+
+#: addon/synthDrivers/_aivis/__init__.py:267
+#, python-brace-format
+msgid "No voice models (.aivmx) were found. Place them in {path}."
+msgstr "音声合成モデル (.aivmx) が見つかりません。{path} に配置してください。"
+
+#: addon/synthDrivers/_aivis/__init__.py:277
+msgid "There are no voice models that can be loaded."
+msgstr "読み込める音声合成モデルがありません。"
+
+#: addon/synthDrivers/_aivis/cuda_installer.py:185
+#, python-brace-format
+msgid "The downloaded file is corrupted: {url}"
+msgstr "ダウンロードしたファイルが壊れています: {url}"
+
+#: addon/synthDrivers/_aivis/cuda_installer.py:205
+#, python-brace-format
+msgid "The extracted file does not match: {member}"
+msgstr "取り出したファイルが一致しません: {member}"
+
+#: addon/synthDrivers/_aivis/model_hub.py:38
+msgid "Most popular (downloads)"
+msgstr "人気順 (ダウンロード数)"
+
+#: addon/synthDrivers/_aivis/model_hub.py:38
+msgid "Newest"
+msgstr "新着順"
+
+#: addon/synthDrivers/_aivis/model_hub.py:38
+msgid "Most liked"
+msgstr "いいねの多い順"
+
+#: addon/synthDrivers/_aivis/model_hub.py:40
+msgid "ACML 1.0 (commercial and non-commercial use)"
+msgstr "ACML 1.0 (営利・非営利で利用可)"
+
+#: addon/synthDrivers/_aivis/model_hub.py:41
+msgid "ACML-NC 1.0 (non-commercial use only)"
+msgstr "ACML-NC 1.0 (非営利のみ)"
+
+#: addon/synthDrivers/_aivis/model_hub.py:42
+msgid "CC0 (public domain)"
+msgstr "CC0 (パブリックドメイン)"
+
+#: addon/synthDrivers/_aivis/model_hub.py:43
+msgid "Custom license (be sure to read the full text)"
+msgstr "独自ライセンス (本文を必ず確認してください)"
+
+#: addon/synthDrivers/_aivis/model_hub.py:44
+msgid "Internal use"
+msgstr "内部用"
+
+#: addon/synthDrivers/_aivis/model_hub.py:47
+msgid "Existing character"
+msgstr "既存のキャラクター"
+
+#: addon/synthDrivers/_aivis/model_hub.py:48
+msgid "Original character"
+msgstr "オリジナルキャラクター"
+
+#: addon/synthDrivers/_aivis/model_hub.py:49
+msgid "Real person"
+msgstr "実在の人物"
+
+#: addon/synthDrivers/_aivis/model_hub.py:50
+msgid "Deceased person"
+msgstr "故人"
+
+#: addon/synthDrivers/_aivis/model_hub.py:51
+msgid "Fictional person"
+msgstr "架空の人物"
+
+#: addon/synthDrivers/_aivis/model_hub.py:52 addon/synthDrivers/_aivis/model_hub.py:68
+msgid "Other"
+msgstr "その他"
+
+#: addon/synthDrivers/_aivis/model_hub.py:55
+msgid "Boy"
+msgstr "少年"
+
+#: addon/synthDrivers/_aivis/model_hub.py:56
+msgid "Girl"
+msgstr "少女"
+
+#: addon/synthDrivers/_aivis/model_hub.py:57
+msgid "Young man"
+msgstr "若い男性"
+
+#: addon/synthDrivers/_aivis/model_hub.py:58
+msgid "Young woman"
+msgstr "若い女性"
+
+#: addon/synthDrivers/_aivis/model_hub.py:59
+msgid "Adult man"
+msgstr "大人の男性"
+
+#: addon/synthDrivers/_aivis/model_hub.py:60
+msgid "Adult woman"
+msgstr "大人の女性"
+
+#: addon/synthDrivers/_aivis/model_hub.py:61
+msgid "Middle-aged man"
+msgstr "中年の男性"
+
+#: addon/synthDrivers/_aivis/model_hub.py:62
+msgid "Middle-aged woman"
+msgstr "中年の女性"
+
+#: addon/synthDrivers/_aivis/model_hub.py:63
+msgid "Elderly man"
+msgstr "高齢の男性"
+
+#: addon/synthDrivers/_aivis/model_hub.py:64
+msgid "Elderly woman"
+msgstr "高齢の女性"
+
+#: addon/synthDrivers/_aivis/model_hub.py:65
+msgid "Androgynous"
+msgstr "中性的"
+
+#: addon/synthDrivers/_aivis/model_hub.py:66
+msgid "Infant"
+msgstr "幼児"
+
+#: addon/synthDrivers/_aivis/model_hub.py:67
+msgid "Mechanical"
+msgstr "機械的"
+
+#: addon/synthDrivers/dash.py:119
+msgid "Could not load DASH."
+msgstr "DASH を読み込めませんでした。"
+
+#: addon/synthDrivers/dash.py:33
+msgid "Use GPU (DirectML/CUDA)"
+msgstr "GPU (DirectML/CUDA) を使う"
+
+#: buildVars.py:25
+msgid "DASH, Direct Aivis Streaming Handler"
+msgstr "DASH, Direct Aivis Streaming Handler"
+
+#. Translators: the add-on description shown in the NVDA add-on store / manager
+#: buildVars.py:27
+msgid ""
+"A speech synthesizer for NVDA that speaks with AivisSpeech (Style-Bert-VITS2 / AIVMX) voices.\n"
+"Synthesis is streamed, so speech starts without waiting for the whole sentence to be synthesized."
+msgstr ""
+"AivisSpeech (Style-Bert-VITS2 / AIVMX) の音声で NVDA を読み上げる音声エンジンです。\n"
+"音声合成をストリーミング化し、文全体の合成を待たずに読み上げを開始します。"

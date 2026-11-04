@@ -1,0 +1,118 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (C) 2024-2026 tsukumijima, litagin02 (Style-Bert-VITS2)
+# This file is taken from Style-Bert-VITS2 (https://github.com/tsukumijima/Style-Bert-VITS2, commit b937361, style_bert_vits2/nlp/japanese/g2p_utils.py),
+# licensed under the GNU Affero General Public License v3.0.
+# Modified by yamahubuki, ACT Laboratory, 2026, for DASH (import paths, logging, pydantic -> dataclass).
+from pyopenjtalk import OpenJTalk
+
+from .g2p import g2p
+from .mora_list import (
+    CONSONANTS,
+    MORA_KATA_TO_MORA_PHONEMES,
+    MORA_PHONEMES_TO_MORA_KATA,
+)
+from ..nanairo_emoji import is_nanairo_emoji_symbol
+from ..symbols import PUNCTUATIONS
+
+
+def g2kata_tone(
+    norm_text: str,
+    *,
+    analysis_text: str | None = None,
+    use_nanairo: bool = False,
+    use_tsqyomi: bool = False,
+    jtalk: OpenJTalk | None = None,
+) -> list[tuple[str, int]]:
+    """
+    テキストからカタカナとアクセントのペアのリストを返す。
+    JP-Extra 前提かつ推論時のみに使われる関数のため、常に `raise_yomi_error=False` を指定して g2p() を呼ぶ仕様になっている。
+
+    Args:
+        norm_text (str): 正規化されたテキスト。
+        analysis_text (str | None, optional): `normalize_text(return_analysis_text=True)` が返す解析用テキスト。g2p() にそのまま渡す。Defaults to None.
+        use_nanairo (bool, optional): Nanairo 専用の絵文字モーラを保持するかどうか。Defaults to False.
+        use_tsqyomi (bool): True の場合、ロード済みの tsqyomi で文脈に合う読み候補を選ぶ (デフォルト: False)
+        jtalk (OpenJTalk | None, optional): 未指定時は pyopenjtalk モジュール内部で保持されているインスタンスが自動的に利用される。
+
+    Returns:
+        list[tuple[str, int]]: カタカナと音高のリスト。
+    """
+
+    phones, tones, *_ = g2p(
+        norm_text,
+        analysis_text=analysis_text,
+        use_jp_extra=True,
+        use_nanairo=use_nanairo,
+        use_tsqyomi=use_tsqyomi,
+        raise_yomi_error=False,
+        jtalk=jtalk,
+    )
+    return phone_tone2kata_tone(list(zip(phones, tones)))
+
+
+def phone_tone2kata_tone(phone_tone: list[tuple[str, int]]) -> list[tuple[str, int]]:
+    """
+    phone_tone の phone 部分をカタカナに変換する。ただし最初と最後の ("_", 0) は無視する。
+
+    Args:
+        phone_tone: 音素と音高のリスト。
+
+    Returns:
+        カタカナと音高のリスト。
+    """
+
+    phone_tone = phone_tone[1:]  # 最初の("_", 0)を無視
+    phones = [phone for phone, _ in phone_tone]
+    tones = [tone for _, tone in phone_tone]
+    result: list[tuple[str, int]] = []
+    current_mora = ""
+    for phone, next_phone, tone, next_tone in zip(phones, phones[1:], tones, tones[1:]):
+        # zip の関係で最後の ("_", 0) は無視されている
+        if phone in PUNCTUATIONS:
+            result.append((phone, tone))
+            continue
+        # Nanairo 用の絵文字モーラは句読点と同様にそのままパススルーする
+        if is_nanairo_emoji_symbol(phone) is True:
+            result.append((phone, tone))
+            continue
+        if phone in CONSONANTS:  # n以外の子音の場合
+            assert current_mora == "", f"Unexpected {phone} after {current_mora}"
+            assert tone == next_tone, f"Unexpected {phone} tone {tone} != {next_tone}"
+            current_mora = phone
+        else:
+            # phoneが母音もしくは「N」
+            current_mora += phone
+            result.append((MORA_PHONEMES_TO_MORA_KATA[current_mora], tone))
+            current_mora = ""
+
+    return result
+
+
+def kata_tone2phone_tone(kata_tone: list[tuple[str, int]]) -> list[tuple[str, int]]:
+    """
+    `phone_tone2kata_tone()` の逆の変換を行う。
+
+    Args:
+        kata_tone: カタカナと音高のリスト。
+
+    Returns:
+        音素と音高のリスト。
+    """
+
+    result: list[tuple[str, int]] = [("_", 0)]
+    for mora, tone in kata_tone:
+        if mora in PUNCTUATIONS:
+            result.append((mora, tone))
+        # Nanairo 用の絵文字モーラは句読点と同様にそのままパススルーする
+        elif is_nanairo_emoji_symbol(mora) is True:
+            result.append((mora, tone))
+        else:
+            consonant, vowel = MORA_KATA_TO_MORA_PHONEMES[mora]
+            if consonant is None:
+                result.append((vowel, tone))
+            else:
+                result.append((consonant, tone))
+                result.append((vowel, tone))
+    result.append(("_", 0))
+
+    return result

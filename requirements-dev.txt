@@ -1,0 +1,19 @@
+# 開発・ビルド用 (tools\py313 に入れる)。アドオンに同梱する版は scripts/third_party.py で固定している
+numpy==2.5.4
+onnxruntime-directml==1.23.0
+onnx==1.23.2
+ml_dtypes==0.6.0
+protobuf==7.36.2
+pyopenjtalk-plus==0.4.1.post10
+sudachipy==0.7.0
+sudachidict_core==20261015
+pydantic==2.14.2
+pydantic_core==2.50.2
+annotated_types==0.8.0
+typing_extensions==4.16.0
+typing_inspection==0.4.4
+jaconv==0.5.0
+num2words==0.5.14
+e2k @ https://github.com/tsukumijima/e2k/archive/9920754e15d8c96404bef0bd81d424352fb7a48b.zip
+# ビルド (readme の HTML 化)
+Markdown==3.11.2

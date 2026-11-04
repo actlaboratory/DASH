@@ -1,0 +1,307 @@
+{
+ "numpy": {
+  "url": "https://files.pythonhosted.org/packages/90/8c/140a40398a66b4471211be1affdb6ed24c486d581bd28d07b7f2fcb69540/numpy-2.5.4-cp313-cp313-win_amd64.whl",
+  "sha256": "8b4d2fd2d34e5f8c9235ee787de5631a37a28402b15cb80814df973d2be54129",
+  "filename": "numpy-2.5.4-cp313-cp313-win_amd64.whl",
+  "size": 12566113
+ },
+ "onnxruntime-directml": {
+  "url": "https://files.pythonhosted.org/packages/ba/c1/eb24dfaea7686845aa70506c2335955bcdcb9d673eb0358c38f6e3d0cfec/onnxruntime_directml-1.23.0-cp313-cp313-win_amd64.whl",
+  "sha256": "92bc0681f6a01554645f572b5d384dc9d8ca9811c84f1884c27ca6937802a259",
+  "filename": "onnxruntime_directml-1.23.0-cp313-cp313-win_amd64.whl",
+  "size": 25116276
+ },
+ "onnx": {
+  "url": "https://files.pythonhosted.org/packages/38/ce/102fd4a0b2a6d111a9c86745e084c4c68c0ee020eaa359a03a8d43e4646f/onnx-1.23.2-cp312-abi3-win_amd64.whl",
+  "sha256": "9b382ba898a7c142a0801d03cf04ecabced96c1543c7b643a86f0928143802de",
+  "filename": "onnx-1.23.2-cp312-abi3-win_amd64.whl",
+  "size": 7872489
+ },
+ "ml_dtypes": {
+  "url": "https://files.pythonhosted.org/packages/e2/55/4561acefa00fa4bcbfb82ca6a48578b41f372cd7dd7cdd6eb4720abc2e5f/ml_dtypes-0.6.0-cp313-cp313-win_amd64.whl",
+  "sha256": "fb87f46b4f7ad7b5d3ad8f4b452b024bd4229d44c8ff934798c1fe656210387a",
+  "filename": "ml_dtypes-0.6.0-cp313-cp313-win_amd64.whl",
+  "size": 439357
+ },
+ "protobuf": {
+  "url": "https://files.pythonhosted.org/packages/8a/55/b77bda4e5e5f5971fb51b07663694690e9afdb9402136c16a522bd621cad/protobuf-7.36.2-cp310-abi3-win_amd64.whl",
+  "sha256": "a300819d441e078a5608c0d3c709796bb548136058fda017ae51d425b44fd353",
+  "filename": "protobuf-7.36.2-cp310-abi3-win_amd64.whl",
+  "size": 456514
+ },
+ "pyopenjtalk-plus": {
+  "url": "https://files.pythonhosted.org/packages/96/cd/56bc0ec02dc3c10b22bc4849eac61bc494c712d7b1335c3e96f42dfddf16/pyopenjtalk_plus-0.4.1.post10-cp313-cp313-win_amd64.whl",
+  "sha256": "c5c71610746acebeba3fd4bff595a0a7066128e5a18c53fdfe3f8ea0dea6530f",
+  "filename": "pyopenjtalk_plus-0.4.1.post10-cp313-cp313-win_amd64.whl",
+  "size": 25587982
+ },
+ "sudachipy": {
+  "url": "https://files.pythonhosted.org/packages/e9/a1/03e40b0eadbdd48ed47aef7aaf27d4703f5cc225750872af1a26de08ec2b/sudachipy-0.7.0-cp310-abi3-win_amd64.whl",
+  "sha256": "8d0429db2d02d408daa7dccd062a6d8c2984a07f8e448b49a3ea694377617658",
+  "filename": "sudachipy-0.7.0-cp310-abi3-win_amd64.whl",
+  "size": 1515929
+ },
+ "sudachidict_core": {
+  "url": "https://files.pythonhosted.org/packages/3d/6a/9dddc36e33ff7f86e394315a77b90d0f41bfd161e011d77a8397662d53e0/sudachidict_core-20261015-py3-none-any.whl",
+  "sha256": "6d7774b518e64c88a0578975d569590b3dae3b3c834f166486aa611879ee9d98",
+  "filename": "sudachidict_core-20261015-py3-none-any.whl",
+  "size": 76937301
+ },
+ "pydantic": {
+  "url": "https://files.pythonhosted.org/packages/97/01/c71a71258b58659c72504e5fd65b451f6e36e34dc931d0b237ded213c814/pydantic-2.14.2-py3-none-any.whl",
+  "sha256": "7efbf7507b937931cd32a5755acb00ea1cf5ccb1d4e8067a5850d5069e382118",
+  "filename": "pydantic-2.14.2-py3-none-any.whl",
+  "size": 490403
+ },
+ "pydantic_core": {
+  "url": "https://files.pythonhosted.org/packages/6f/dd/14eeec394ec1422f9c4e9743cd746f4502232a7c65eb235d1a03729d94ab/pydantic_core-2.50.2-cp313-cp313-win_amd64.whl",
+  "sha256": "e5c801bdf3cc92274b8fc2c7023c8751e5ae81260c009ac558ff55ce712a2d45",
+  "filename": "pydantic_core-2.50.2-cp313-cp313-win_amd64.whl",
+  "size": 2250556
+ },
+ "annotated_types": {
+  "url": "https://files.pythonhosted.org/packages/99/91/8acff4f5e50511b911bbccb72b8628a49c68ce14148cd9f6431094859a90/annotated_types-0.8.0-py3-none-any.whl",
+  "sha256": "f072f4d804ea359e4eaf198b1af7a8b0943881a87f31bb764f8bf219bb9419e0",
+  "filename": "annotated_types-0.8.0-py3-none-any.whl",
+  "size": 13427
+ },
+ "typing_extensions": {
+  "url": "https://files.pythonhosted.org/packages/49/d3/b8441a820a491ddfc024b0b0cf0393375b75ea13866d9c66727e54c2fc80/typing_extensions-4.16.0-py3-none-any.whl",
+  "sha256": "481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8",
+  "filename": "typing_extensions-4.16.0-py3-none-any.whl",
+  "size": 45571
+ },
+ "typing_inspection": {
+  "url": "https://files.pythonhosted.org/packages/67/81/4add07e5172b7ac40d8ed5ff580409a7801a4fe26d529bdd915401dabfbe/typing_inspection-0.4.4-py3-none-any.whl",
+  "sha256": "65b8397ba37ccbce054456aaccddfc91e6e3083c92824df348d96ca832f3f147",
+  "filename": "typing_inspection-0.4.4-py3-none-any.whl",
+  "size": 14750
+ },
+ "jaconv": {
+  "url": "https://files.pythonhosted.org/packages/3b/da/9657d637bcacdbaf6a914ce504000da5639f9d945f8d3552a940f021d6c0/jaconv-0.5.0-py3-none-any.whl",
+  "sha256": "2914114fe761ca49fc7089e25e6ad4a400c26f262ffce84e13b176916b71610a",
+  "filename": "jaconv-0.5.0-py3-none-any.whl",
+  "size": 16831
+ },
+ "num2words": {
+  "url": "https://files.pythonhosted.org/packages/d6/5b/545e9267a1cc080c8a1be2746113a063e34bcdd0f5173fd665a5c13cb234/num2words-0.5.14-py3-none-any.whl",
+  "sha256": "1c8e5b00142fc2966fd8d685001e36c4a9911e070d1b120e1beb721fa1edb33d",
+  "filename": "num2words-0.5.14-py3-none-any.whl",
+  "size": 163525
+ },
+ "e2k": {
+  "url": "https://github.com/tsukumijima/e2k/archive/9920754e15d8c96404bef0bd81d424352fb7a48b.zip",
+  "sha256": "c8967f626702eed2645dcc27e68aa65e5181bcbde9df05ceda9f16adc2c35779"
+ },
+ "python-embed": {
+  "url": "https://www.python.org/ftp/python/3.13.9/python-3.13.9-embed-amd64.zip",
+  "sha256": "91d828c2da3a029b41699e918674a0cb379c02cf20dab9c501306885f837402a"
+ },
+ "directml-license": {
+  "url": "https://api.nuget.org/v3-flatcontainer/microsoft.ai.directml/1.15.4/microsoft.ai.directml.1.15.4.nupkg",
+  "members": {
+   "LICENSE.txt": "a05138e3a085ff60a44881eedfa58dccb03ecc1d7b1f6ae888418e8c2fec4b8d",
+   "ThirdPartyNotices.txt": "2c95795c13ff48a58b6ed916f37901c23d964b5d9d601af422f17ad2172e7950"
+  }
+ },
+ "bert-model": {
+  "url": "https://huggingface.co/tsukumijima/deberta-v2-large-japanese-char-wwm-onnx/resolve/d701ec67708287b20d2063270f6b535e6eed09ab/model.onnx",
+  "sha256": "c5c880ef4bd0d3308ec6503a8728efae920bc5c5a984de4f76fc3d0ad518a2ec"
+ },
+ "bert-vocab": {
+  "url": "https://huggingface.co/tsukumijima/deberta-v2-large-japanese-char-wwm-onnx/resolve/d701ec67708287b20d2063270f6b535e6eed09ab/vocab.txt",
+  "sha256": "902cbd7e218aaf23a72955533293ceac12fcc4e010ad98c0c14757b94ce7abb6"
+ },
+ "anneli": {
+  "url": "https://api.aivis-project.com/v1/aivm-models/a59cb814-0083-4369-8542-f51a29e72af7/download?model_type=AIVMX",
+  "sha256": "f87ccea2e8e2de0e0bfe52e803945af903b4086bf25621a015111628f00e4119",
+  "size": 258037076,
+  "version": "1.2.0"
+ },
+ "dic-1-01_default.dic": {
+  "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/1-01_default.dic",
+  "sha256": "5df606ab158cdeacf0c85795fcb573cf85895b4e08b40ce1c27ecac4f4e00924"
+ },
+ "dic-1-02_naist-jdic-katakana.dic": {
+  "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/1-02_naist-jdic-katakana.dic",
+  "sha256": "76ad712a5704d4337037d8335fe787e6d037dc1339efb94a9d023e8147c8c159"
+ },
+ "dic-1-03_unidic.dic": {
+  "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/1-03_unidic.dic",
+  "sha256": "80040b46eb8fc943a833a283ce642d3cca82df44902829f433dac43ca222c464"
+ },
+ "dic-1-04_jp-accent-dic.dic": {
+  "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/1-04_jp-accent-dic.dic",
+  "sha256": "6d42ad0b53151c21a14b87647ab8f0775cc05899a5e22fb33d788dbde4df9c18"
+ },
+ "dic-1-05_yomitan-dic-accent.dic": {
+  "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/1-05_yomitan-dic-accent.dic",
+  "sha256": "cd0e85f374dc0a7b203faa57baffcb03b3b6badf648e8aa7b8285e9906971063"
+ },
+ "dic-1-06_wiktionary-accent.dic": {
+  "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/1-06_wiktionary-accent.dic",
+  "sha256": "7ddb22004f06212b48559b28aa28dcfef2096ffe8f8bf11d377a5e1bd7f8c9a0"
+ },
+ "dic-1-07_expressway-abbreviations.dic": {
+  "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/1-07_expressway-abbreviations.dic",
+  "sha256": "866ee640ef275f8b867d6542bd2106958003b3040e322ff889f1a44ebd5fa952"
+ },
+ "dic-1-08_place-accent-overrides.dic": {
+  "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/1-08_place-accent-overrides.dic",
+  "sha256": "76365b0a464f793a840c8fcb8ee4b6bdafb8e2eb1c4323263edd9d2b6c52f7fd"
+ },
+ "dic-2-01_sudachidict-small.dic": {
+  "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/2-01_sudachidict-small.dic",
+  "sha256": "73b730293c4fa6fc5afbfb7de353e94dff6c5d9b77ba12346260a615b79e7e8a"
+ },
+ "dic-2-02_sudachidict-core.dic": {
+  "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/2-02_sudachidict-core.dic",
+  "sha256": "01e1ec5cd1edbd22b5646209e99d4cfbae104d5fa87dabc4b8190cc41367a481"
+ },
+ "dic-2-03_yojijukugo.dic": {
+  "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/2-03_yojijukugo.dic",
+  "sha256": "c281c3a7eb11fbf2c716e175b5719c441b4d78e1162586098e12f3f466069640"
+ },
+ "dic-2-04_name-a10-sei.dic": {
+  "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/2-04_name-a10-sei.dic",
+  "sha256": "0d1a4387c7a1f43573c862ea070afa945cb1bc8786007d1c08b3dabd227ede04"
+ },
+ "dic-2-05_name-a10-mei.dic": {
+  "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/2-05_name-a10-mei.dic",
+  "sha256": "b798ebb7c59c259d5c1dba03ab186c700aa2a2f1a5383957920dba2cac40a20d"
+ },
+ "dic-2-06_name-matsutake.dic": {
+  "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/2-06_name-matsutake.dic",
+  "sha256": "4ab738ebc26c8ef9c49876c62a22c49db1760a6e2ae4d01c963c79e1db01f413"
+ },
+ "dic-2-07_mzime-name.dic": {
+  "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/2-07_mzime-name.dic",
+  "sha256": "31666cf7679f7e0dd560b126dabba48a56364195e282178f620bcc8f38f4cc18"
+ },
+ "dic-2-08_personal-name.dic": {
+  "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/2-08_personal-name.dic",
+  "sha256": "de45ddf919ddc878705107118bfbefe718479dd5316e01b04330536c727e356d"
+ },
+ "dic-2-09_place-names.dic": {
+  "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/2-09_place-names.dic",
+  "sha256": "ab1440d1e0a0c0fa3d49ce0099ed1fca3de3c89d65840617dc920c87a759d8b8"
+ },
+ "dic-2-10_skk-jisyo-station.dic": {
+  "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/2-10_skk-jisyo-station.dic",
+  "sha256": "630368f5d7f30f529e495c80118c0f2489e9ed8823c313511cdbe54704eee16b"
+ },
+ "dic-2-11_skk-jisyo-jinmei.dic": {
+  "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/2-11_skk-jisyo-jinmei.dic",
+  "sha256": "f1796466116c1e6f9c6bfe6a7cdd7bc017e7a3862753c4c02c716658ecc73560"
+ },
+ "dic-2-12_skk-jisyo-law.dic": {
+  "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/2-12_skk-jisyo-law.dic",
+  "sha256": "f770f011472a1bb4f029457998bbcd3b2d04434f551822b0751db5fcd14473fa"
+ },
+ "dic-2-13_skk-jisyo-propernoun.dic": {
+  "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/2-13_skk-jisyo-propernoun.dic",
+  "sha256": "087a9a95b3288b9a34212bd35cd4cdedc3ee75dd1a24d0e628f8ac0bdc930e44"
+ },
+ "dic-2-14_skk-jisyo.dic": {
+  "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/2-14_skk-jisyo.dic",
+  "sha256": "6943b35bf648a44e1d093f9a7075fd839644052b1ac85d5cab0b2b1525a16601"
+ },
+ "dic-2-15_o-dic.dic": {
+  "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/2-15_o-dic.dic",
+  "sha256": "22f81a7e6341c3d0b21a23c1139174045711aef836040c7625cdca78b2d581c4"
+ },
+ "dic-2-16_genshin.dic": {
+  "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/2-16_genshin.dic",
+  "sha256": "4ba200597832da6ef824680353be2cd74d3267f1d6304e9a4204c46eba1caf05"
+ },
+ "dic-2-51_bangumi.dic": {
+  "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/2-51_bangumi.dic",
+  "sha256": "27405ab86302dc51026210329fbdf295f44c90ab4d1632aa94db5eb77d3fa373"
+ },
+ "dic-2-52_wiktionary.dic": {
+  "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/2-52_wiktionary.dic",
+  "sha256": "6bc70341ce93b103694339ffc1d0372bea509f360bbaafab5ef71b725acbbb7a"
+ },
+ "dic-2-53_yomitan-dic.dic": {
+  "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/2-53_yomitan-dic.dic",
+  "sha256": "b08171fd68fc51df996598bb8bb15939f50f24e363b7ee0927c7f9b23d775e41"
+ },
+ "dic-2-61_katakana-map.dic": {
+  "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/2-61_katakana-map.dic",
+  "sha256": "1fd1c976dc8c8e673e6b63fa5f39708905ac06f37ea2606d4387c9d9d6581996"
+ },
+ "dic-3-01_sudachidict-notcore-01.dic": {
+  "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/3-01_sudachidict-notcore-01.dic",
+  "sha256": "4ce1e41ebc56117af5d78967d7a46a68cab592ce1fed551b6b74f9eaca71d573"
+ },
+ "dic-3-01_sudachidict-notcore-02.dic": {
+  "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/3-01_sudachidict-notcore-02.dic",
+  "sha256": "712b46b18877bfe980c1975220ecffa5269697042d9f37f76df46c5e7968c6c8"
+ },
+ "dic-3-01_sudachidict-notcore-03.dic": {
+  "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/3-01_sudachidict-notcore-03.dic",
+  "sha256": "86a69f51b04dd1454dfe801de7db7072f6ca1c559c6e3be6f657420ba50da81c"
+ },
+ "dic-3-02_jawiki-kana-kanji-01.dic": {
+  "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/3-02_jawiki-kana-kanji-01.dic",
+  "sha256": "33e0387d5edc51a5c7574c333c831b58cb603e5497d26babb01baf85e45f1dce"
+ },
+ "dic-3-02_jawiki-kana-kanji-02.dic": {
+  "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/3-02_jawiki-kana-kanji-02.dic",
+  "sha256": "6bc9da29a0b6768407b0adc87cd20af996349ec41615858cc0418d3fceb63922"
+ },
+ "dic-3-02_jawiki-kana-kanji-03.dic": {
+  "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/3-02_jawiki-kana-kanji-03.dic",
+  "sha256": "ffd5e3f0943ff70a88fef4cde38985a43a56792e6d383f17657e8b98e75beaba"
+ },
+ "dic-3-03_pixiv-dic.dic": {
+  "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/3-03_pixiv-dic.dic",
+  "sha256": "f47fabf8354032a1dd04bb711ce1c9d6727c5c0e2cdc590ae557fda274861e23"
+ },
+ "dic-3-04_medic-dmime.dic": {
+  "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/3-04_medic-dmime.dic",
+  "sha256": "dfc4c8f5f2fbed60745fff5228abac512dd799963f5eabdcf24431483d92209d"
+ },
+ "dic-3-05_medic-orca.dic": {
+  "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/3-05_medic-orca.dic",
+  "sha256": "d7c31a6229f23fa4de1a11c36cdd6cb2a9be7d3b325292c6b9d1ad01009169e1"
+ },
+ "dic-3-06_msmed12.dic": {
+  "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/3-06_msmed12.dic",
+  "sha256": "c4432910f1655df9be1615898a49b2b67e878cc4eb107796e870d3b94dc7d117"
+ },
+ "notice-open_jtalk": {
+  "url": "https://raw.githubusercontent.com/tsukumijima/open_jtalk/80f8c72f41e6fda2f60efde199101f794be7aaab/src/COPYING",
+  "sha256": "14f380a0db8dce139fdcfb731d21e993a31a00b68907515d1c54a5f356241343"
+ },
+ "notice-hts_engine": {
+  "url": "https://raw.githubusercontent.com/syoyo/hts_engine_API/2821c7a0b02441af42b642365296a35a5c9f0784/src/COPYING",
+  "sha256": "c918ac835f633b9c23465589cdc28e689acfe801b0c3e624b46fa32cc9d6dfa9"
+ },
+ "notice-mecab": {
+  "url": "https://raw.githubusercontent.com/tsukumijima/open_jtalk/80f8c72f41e6fda2f60efde199101f794be7aaab/src/mecab/COPYING",
+  "sha256": "05e94c185a3e31f0c658f7011132be952b6d1a4d588b682f92da380e0a290650"
+ },
+ "tokenizers": {
+  "url": "https://files.pythonhosted.org/packages/d1/6c/24f074c9a0efb98e61b20aafe6b2641922d5db24e447d5d6daffd9e17555/tokenizers-0.23.3-cp310-abi3-win_amd64.whl",
+  "sha256": "1f0823bb00c5fdc98e487354d54dd55a03848d61a1a0bf29a68c77f24f3b26c3",
+  "filename": "tokenizers-0.23.3-cp310-abi3-win_amd64.whl",
+  "size": 2872101
+ },
+ "tsqyomi-model": {
+  "url": "https://huggingface.co/tsukumijima/tsqyomi-models/resolve/917a89d2c93420d1c43213c1e0232b25f7a6aa5f/v6/model.onnx",
+  "sha256": "602e630d3368fe905ace80022f235b21ca1461fcad28dfe40d073a19cfade22f"
+ },
+ "tsqyomi-tokenizer": {
+  "url": "https://huggingface.co/tsukumijima/tsqyomi-models/resolve/917a89d2c93420d1c43213c1e0232b25f7a6aa5f/v6/tokenizer.json",
+  "sha256": "6a0734cf21c802169defaffe719bc2ef12bb9d0be37e54b61ed27aa89394723d"
+ },
+ "tsqyomi-metadata": {
+  "url": "https://huggingface.co/tsukumijima/tsqyomi-models/resolve/917a89d2c93420d1c43213c1e0232b25f7a6aa5f/v6/metadata.json",
+  "sha256": "e167967ab2f43f5c62ab27b7e8e189cd6dace588247be31e47eec8613b08378e"
+ },
+ "tsqyomi-license": {
+  "url": "https://huggingface.co/tsukumijima/tsqyomi-models/resolve/917a89d2c93420d1c43213c1e0232b25f7a6aa5f/LICENSE.txt",
+  "sha256": "9f0d948e295c93703508d470a112b1004f29351f41ba33a32dd692adaed0f7c3"
+ }
+}

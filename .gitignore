@@ -1,0 +1,41 @@
+# ビルド時にダウンロード・生成されるもの (scons → scripts/build_addon.py, scripts/third_party.py)
+build/
+dist/
+output/
+*.nvda-addon
+*.part
+*.bad
+.sconsign.dblite
+
+# tools/build.py (GitHub Actions) がリポジトリ直下に作るもの
+/DASH-*.zip
+/DASH-*_info.json
+
+# tools/download_gettext.py がリポジトリ直下に展開する gettext のツール
+/*.exe
+/*.dll
+
+# 開発用の Python と、検証用に隔離して入れたライブラリ (README の手順で用意する)。
+# tools/*.py (VSU と共通のビルドスクリプト) は管理する
+tools/py313/
+tools/ort_cuda11/
+tools/dl/
+tools/*.zip
+tools/get-pip.py
+
+# 参照用に clone した原本 (AivisSpeech-Engine, Style-Bert-VITS2)
+ref/
+
+# 計測・検証の出力
+work/
+
+# Python
+__pycache__/
+*.py[co]
+
+# アドオンのドキュメントは build 時に Markdown から生成する
+addon/doc/**/*.html
+
+# エディタ・ツール
+.vscode/
+.claude/

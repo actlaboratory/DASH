@@ -1,0 +1,994 @@
+AIVIS Core ストリーミング化 作業ログ
+==================================================
+目的: AivisSpeech-Engine からエンジン(HTTPサーバ等)を取り除き、音声合成コアだけを抜き出して
+      ストリーミング再生に対応させる。最終的に NVDA 音声アドオン化する(参考: VSU アドオン)。
+制約: 書き込みはこのディレクトリ (C:\Users\yuki\Downloads\aivis\core_dev) 内のみ。OSへのインストール不可。
+
+--------------------------------------------------
+2026-11-03 03:03 作業開始
+--------------------------------------------------
+- 環境調査
+  - D:\dev\python312 : Python 3.12.9 **32bit** (embeddable + pip)
+  - D:\dev\python38-64 : Python 3.8 64bit (ユーザーより提示)
+  - D:\dev\gh : gh 2.101.0 / git 2.18.0
+  - NVDA は未インストール(D:\dev\nvda は 2023年の古いソース)
+- 参考アドオン VSU (C:\Users\yuki\Dropbox\software\ACTLab\NVDA\VSU) を読んだ(読み取りのみ)
+  - minimumNVDAVersion = 2026.1
+  - 同梱 DLL (voicevox_core.dll, onnxruntime) は x64 (PE machine 0x8664)
+    → NVDA 2026.1 は 64bit / Python 3.13。アドオンは x64・cp313 向けに作る必要がある
+  - 構成: synthDrivers/VSU.py (SynthDriver) + _vsu.py (合成スレッド/再生スレッド/キュー)
+    + _voicevox_wrapper.py (ctypes)。
+  - ストリーミング方式: create_audio_feature → render(start,end) を区間ごとに呼び、
+    最初の区間を 0.3 秒と短くして再生開始を早め、以降 1.0 秒ずつ nvwave.WavePlayer に feed。
+    stop() は世代番号(_speech_gen)を進めてキューを破棄する方式。→ これを踏襲する。
+
+- 判断: 32bit Python 3.12 / 3.8 では NVDA 2026.1 (x64, Py3.13) と同じ条件で検証できないため、
+  Python 3.13 x64 の embeddable 版をこのディレクトリ内に展開して使う(ユーザー了承済み)。
+
+--------------------------------------------------
+03:07-03:08 ソース取得 (ref/)
+--------------------------------------------------
+- ref/AivisSpeech-Engine : https://github.com/Aivis-Project/AivisSpeech-Engine (depth 1)
+  ※1回目のクローンが中断され空の .git だけ残ったので削除して再クローン
+- ref/sbv2 : https://github.com/tsukumijima/Style-Bert-VITS2 @ b937361
+  (AivisSpeech-Engine の pyproject.toml で固定されている音声合成コア)
+
+- コード読解の結果(合成パイプライン)
+  1. normalize_text → g2p (pyopenjtalk-plus) → 音素/トーン/word2ph
+  2. DeBERTa-v2-large 日本語 char-wwm (ONNX, fp16) で BERT 特徴量 → 音素単位に展開
+  3. AIVMX(=ONNX) を1回 run して波形全体を一括出力 (44.1kHz, hop 512)
+  → 文章全体の推論が終わるまで1サンプルも出てこない。これが遅延の原因。
+
+--------------------------------------------------
+03:09-03:10 開発用 Python 構築 (tools/)
+--------------------------------------------------
+- tools/py313 : python-3.13.9-embed-amd64 を展開。python313._pth で import site を有効化、
+  get-pip.py で pip 導入。
+- pip で導入: numpy, onnxruntime-directml 1.24.4, onnx 1.23.2(グラフ解析用・開発時のみ),
+  pyopenjtalk-plus 0.4.1.post10 (cp313 win_amd64 wheel あり), jaconv, num2words,
+  huggingface_hub, aivmlib, pydantic, e2k
+  ※num2words の依存 docopt が sdist のみで setuptools が必要だったため、先に setuptools を入れて再実行
+
+--------------------------------------------------
+03:10-03:11 モデル調査 (scripts/)
+--------------------------------------------------
+- 既存の AivisSpeech のデータを発見(読み取りのみ・書き込みはしない):
+  %APPDATA%\AivisSpeech-Engine\Models\*.aivmx (3モデル, すべて Style-Bert-VITS2 JP-Extra)
+  %APPDATA%\AivisSpeech-Engine\BertModelCaches\...\snapshots\d701ec6...\model_fp16.onnx
+- scripts/inspect_graph.py : AIVMX の ONNX 入出力とノード構成を表示
+  入力: x_tst, x_tst_lengths, sid, tones, language, bert, style_vec, length_scale, sdp_ratio,
+        noise_scale, noise_scale_w   出力: output (波形)
+  ノード: /flow 2991, /sdp 1034, /enc_p 764, /dec 246 ...
+- scripts/find_dec.py : HiFi-GAN デコーダ(/dec)部分グラフの境界テンソルを特定
+  - 潜在変数 z (= flow 出力 × マスク) : /Mul_9_output_0   [1, 192, フレーム数]
+  - 話者埋め込み g                    : /Unsqueeze_output_0
+  - 出力 output = /dec/Tanh
+  → ONNX グラフを「前段(テキスト→z)」と「デコーダ(z→波形)」に分割できる見込み。
+    デコーダは畳み込みのみなので、z をフレーム方向に(のりしろ付きで)区切って
+    少しずつ波形化すれば VOICEVOX と同様の真のストリーミングが可能。
+
+--------------------------------------------------
+方針(予定)
+--------------------------------------------------
+1. AIVMX を前段/デコーダの2つの ONNX に分割(onnx.utils.Extractor)し、出力一致を検証
+2. デコーダの受容野からのりしろ量を決め、区間デコードが一括デコードと一致することを検証
+3. 長文は文単位でも分割し、BERT/前段の処理時間も先頭文だけで済むようパイプライン化
+4. エンジン(FastAPI 等)に依存しない最小コア (transformers 不要のトークナイザ自前実装など)
+5. VSU を参考に NVDA synthDriver を作成し、最初の音が出るまでの時間を計測
+
+--------------------------------------------------
+03:12-03:14 グラフ分割の検証・速度計測
+--------------------------------------------------
+- scripts/split_test.py : onnx.utils.Extractor で AIVMX を front(→z,g) と dec(z,g→波形) に分割。
+  ノイズ 0 で一括推論と比較 → maxdiff 0.00 (完全一致)。dec は 246 ノード / 59MB。
+- 計測で一時 5.6 秒 (2.8 秒の音声) と非常に遅い結果が出た → scripts/bench_dec.py, bench_dec2.py で調査
+  - intra_op スレッド 16 で 2.6 秒など、スレッド数過多で極端に遅くなる (i7-13700F: P8+E8, 24 論理)
+  - 単体では dec RTF≈0.1、DirectML (RTX 4060 Ti) では RTF≈0.01
+  - 再計測すると full 0.32s / front 0.06s / dec 0.26s (2.8 秒の音声) で安定。
+    初回の遅さは他セッションや外部負荷との CPU 奪い合いが原因と判断。
+  → 対策: intra_op_num_threads を控えめに (既定 min(8, 論理コア/2))、スピン待ち無効化。
+
+--------------------------------------------------
+03:14-03:20 最小コア aivis_core/ の作成
+--------------------------------------------------
+- ref/sbv2 から日本語処理だけをコピー (aivis_core/nlp/):
+  symbols.py, nanairo_emoji.py, japanese/{g2p, g2p_utils, mora_list, normalizer, itaiji_map, katakana_map}.py
+  - import を相対 import に書き換え。loguru → 標準 logging、pydantic BaseModel → dataclass。
+- aivis_core/nlp/bert_models.py : transformers を使わない文字単位トークナイザ (vocab.txt 引き当て) と
+  DeBERTa ONNX 推論。g2p.py から呼ばれる load_tokenizer() 互換 API も提供。
+- aivis_core/frontend.py : テキスト→音素ID/トーン/言語ID/BERT 特徴量 (get_text_onnx の JP 経路相当)、文分割。
+- aivis_core/engine.py :
+  - AIVMX のメタデータ (manifest/hyper_parameters/style_vectors) を onnx の metadata_props から直接読む
+    (aivmlib/pydantic 不要)
+  - AivisModel: ロード時に /dec/conv_pre と /dec/cond の入力を探して front/dec に分割 (メモリ上)。
+    見つからない構造なら分割せず一括推論にフォールバック。
+  - infer_stream(): z を先頭 16 フレーム、以降 64 フレームずつ、のりしろ付きでデコードして yield。
+  - AivisCore.synthesize_stream(): 文単位に分割→文ごとに BERT+front→dec を区間ごとに int16 で yield。
+    先頭の無音はトリム、文末無音は次の音が来るまで保留 (AivisSpeech の _trim_silence 相当)。
+- 注意: この環境の Bash ではヒアドキュメントに日本語を含めるとツールがエラーになる。
+  日本語を含むファイルは Write/Edit ツールで書く。
+
+--------------------------------------------------
+03:16 初の通し動作 (scripts/test_core.py, CPU, Anneli)
+--------------------------------------------------
+  import 1.3s / BERT ロード 3.6s / モデルロード+分割 3.7s
+  「こんにちは。」              最初の音まで 129ms  (音声 0.67s)
+  2 文 (4.5 秒の音声)            最初の音まで 246ms  RTF 0.21
+  吾輩は猫である 4 文 (10.9 秒)  最初の音まで 285ms  RTF 0.21
+  ※ 一括合成だと最初の音まで ≒ 全体の処理時間 (この例で約 2.3 秒) かかっていた。
+  ※ 出力ピークは 8000〜13000 (int16)。本家は発話ごとにピーク正規化しているため本家より小さい → 要調整
+
+--------------------------------------------------
+03:17-03:22 正しさの検証
+--------------------------------------------------
+- scripts/verify.py
+  (1) 自作トークナイザ vs transformers.BertJapaneseTokenizer (検証用に開発環境だけ transformers を導入)
+      → 全角英字「ＮＶＤＡ」で不一致。transformers の CharacterTokenizer が NFKC 正規化していたため。
+        NFKC を追加して全一致。
+  (2) 区間デコードののりしろ (margin) と一括デコードとの誤差 (658 フレームの文)
+      margin 0:8.9dB / 4:15.6dB / 8:20.9dB / 12 以上: SNR 109〜112dB (= 浮動小数点誤差のみ、完全一致)
+      → デコーダの受容野は 12 フレーム以内。margin 12 以上なら一括と同一波形。
+- scripts/verify_frontend.py + scripts/texts.txt
+  本家 style_bert_vits2 (ref/sbv2) の get_text_onnx() と自作 text_to_features() を比較 (9 文)
+  → 音素ID/トーン/言語ID は全文完全一致。BERT 特徴量は相対誤差 ~1e-3 (fp16 の丸め) で一致。
+
+--------------------------------------------------
+03:23-03:36 遅延の内訳調査と高速化
+--------------------------------------------------
+- scripts/profile_latency.py : 文長ごとに g2p / BERT / front / 最初の dec の時間を計測。
+  測るたびに 2〜4 倍ばらつく現象があり、原因を 3 つ特定した。
+
+  (1) ORT の arena_extend_strategy=kSameAsRequested (AivisSpeech Engine の設定をそのまま使っていた)
+      scripts/prof_front.py (ORT プロファイラ) : カーネル時間 307ms に対し実時間 1050ms。
+      scripts/bench_front2.py : 800 フレームの front が kSameAsRequested 1015ms → 既定アリーナ 236ms。
+      アリーナ無効 492ms、ORT 既定 (全スレッド+スピン) 295ms、最適化レベルはほぼ無関係。
+      → 既定アリーナに変更、最適化レベル EXTENDED。
+      ※ 本家 AivisSpeech Engine 自体が遅い原因の一つと思われる。
+
+  (2) Windows 11 の電力スロットリング (EcoQoS)。バックグラウンドのプロセスが E コア/低クロックに寄せられる。
+      aivis_core/winperf.py で SetProcessInformation(ProcessPowerThrottling) を制御して比較:
+        強制 ON : 5文字 703ms / 40文字 1510ms / 80文字 2761ms (最初の音まで)
+        強制 OFF: 5文字 216ms / 40文字  350ms / 80文字  827ms
+      NVDA は常にバックグラウンドプロセスなのでまさにこれに該当する。
+      → AivisCore 初期化時にプロセスの実行速度スロットリングを無効化 (disable_power_throttling=True)。
+
+  (3) BERT の fp16 モデルは CPU では遅い (Cast だらけ)。scripts/bench_bert.py:
+        fp16: 5 トークン 122ms / 74 トークン 166ms
+        fp32:            40ms /             82ms   特徴量 cos=1.0000 (同一)
+        int8 (動的量子化):22ms /             51ms   cos≈0.96〜0.98 (特徴量が変わるので不採用)
+      → fp16 モデルをロード時にメモリ上で fp32 に変換 (bert_models.fp16_model_to_fp32)。
+        model.onnx (fp32) があればそれを使う。メモリは 650MB → 1.3GB に増える。
+
+- その他の調整
+  - 前段 (flow) は文長に超線形 (80 文字=1200 フレームで約 0.6 秒)。
+    → 先頭の文は 30 文字を超えたら読点で区切る、80 文字超の文も読点で区切る (StreamConfig)。
+  - 先頭区間が無音でトリムされると次の 64 フレームを待つことになっていた → 区間長を 16→32→64 と段階的に。
+  - margin を 12 フレームに (検証で一括と同一になる最小値)。
+  - 音量: 固定ゲイン 2.4 倍 + |y|>0.85 でソフトクリップ (本家のピーク正規化はストリーミング不可のため)。
+  - DirectML (GPU) は新しい入力形状ごとのオーバーヘッドが大きく、短い発話ではむしろ遅い
+    (最初の音まで中央値 484ms)。→ 既定は CPU。
+
+- scripts/bench_nvda.py + scripts/nvda_texts.txt : NVDA で読まれがちな 30 種の異なる発話で計測 (CPU)
+    当初 (kSameAsRequested, fp16)  : 計測不安定 (中央値 500ms〜)
+    アリーナ修正+スロットリング無効: 最初の音まで 中央値 250ms / p90 334ms
+    + BERT fp32                      : 最初の音まで 中央値 171ms / p90 215ms / 最小 94ms, RTF 0.26
+  長文 (吾輩は猫である 4 文, 11 秒): 最初の音まで 185ms, 全体 RTF 0.18
+
+--------------------------------------------------
+03:37-03:42 辞書・依存関係の調査
+--------------------------------------------------
+- AivisSpeech Engine は resources/dictionaries/*.dic (38 個, 226MB) を OpenJTalk に適用している。
+  AivisCore.apply_dictionaries() を追加。scripts/bench_dict.py: 適用 0.01 秒、g2p は +2ms/発話。
+  読みの改善例: 「原神」ハラカミ → ゲンシン
+- scripts/list_deps.py : 実際に import される外部パッケージを列挙
+  numpy, onnxruntime, onnx(+protobuf, ml_dtypes), pyopenjtalk(-plus), sudachipy, sudachidict_core,
+  pydantic(+core, annotated_types, typing_extensions, typing_inspection) ※後者は pyopenjtalk-plus の依存,
+  jaconv, num2words, e2k
+- Sudachi 辞書 (193MB) は同形異音語「風(かぜ/ふう)」の読み分けで使われる。初回ロード 50ms (mmap)。
+- NVDA の WASAPI プレイヤー (D:\dev\nvda の nvdaHelper/local/wasapi.cpp) を読んで確認:
+  feed(b"", onDone=cb) は「今までに送った音声の再生が終わった時点で cb」を登録する → インデックス通知に使う。
+
+--------------------------------------------------
+03:42-03:50 NVDA アドオン化
+--------------------------------------------------
+- addon_src/
+  - manifest.ini : name=aivisStream, minimumNVDAVersion=2026.1
+  - synthDrivers/aivis.py : SynthDriver (声/速度/抑揚/音量/GPU)。
+      速度 0..100 → 話速 3^((rate-50)/50) 倍 (1/3〜3 倍)
+      抑揚 0..100 → AivisSpeech の intonationScale 0..2 → スタイルの強さ (Engine と同じ変換式)
+      ピッチは SBV2 では pyworld 加工になり音質が落ちるので非対応
+  - synthDrivers/_aivis/__init__.py : VSU と同じ 2 スレッド構成 (合成スレッド + 再生スレッド)、世代番号でキャンセル。
+      声の一覧はメタデータだけ同期的に読み、BERT/モデルのロードはバックグラウンド。
+  - synthDrivers/_aivis/paths.py : データ探索。NVDA設定フォルダ\aivis\{models,bert,dictionaries,user.dic}
+      → アドオン同梱辞書 → %APPDATA%\AivisSpeech-Engine (Models, BertModelCaches, user.dic) を読み取り専用で流用
+  - doc/ja/readme.md
+- scripts/build_addon.py : addon_src + aivis_core + 依存ライブラリ (tools/py313 の site-packages から、
+  テスト類など不要部分は除外) + 既定辞書 を build/addon に集めて dist/aivisStream-0.1.0.nvda-addon を作る。
+  展開時 692MB / 圧縮 213MB (辞書 226MB, Sudachi 辞書 193MB, OpenJTalk 108MB, onnxruntime 64MB が大半)。
+
+- scripts/nvda_harness.py : NVDA を模したテストハーネス (NVDA はこの PC に無く、実機で動かすとデスクトップの
+  操作を奪うため)。
+  - 開発環境の site-packages を sys.path から外し、ビルドしたアドオンの同梱ライブラリだけで動くことを確認
+  - NVDA モジュールをスタブ化。FakeWavePlayer は WASAPI と同様に実時間で再生が進み、バッファが一杯なら
+    feed がブロック、onDone は再生位置で呼ばれる。再生中にバッファが空になったら音切れとして記録。
+  見つかった問題と対処:
+  - 先頭の無音をトリムすると最初の区間が数十 ms しか残らず、0.2 秒付近で 15〜92ms の音切れ
+    → コアで最初の出力を 150ms 以上溜めてから出すようにした (StreamConfig.min_first_ms)
+  - キャンセル直後に古い発話の音声が混入する競合 (世代確認と feed の間に cancel が入る。VSU にも同じ競合あり)
+    → feed から戻った時点で世代が変わっていたら即 stop() する。
+  最終結果 (同梱ライブラリのみ, CPU):
+    初期化: 同期部分 2.4 秒 (声の一覧) + バックグラウンド 8.3 秒 (BERT fp32 化, モデル分割, 辞書, ウォームアップ)
+    短い発話 最初の音まで 171〜216ms / メニュー 2 項目 176〜191ms / 5 文の連続読み 201〜217ms
+    キャンセル直後の発話 176〜191ms / 矢印キー連打を模した 20 発話 中央値 190〜212ms
+    音切れ 0、インデックス通知はすべて再生位置どおり、古い音声の混入はすべて直後に停止
+
+--------------------------------------------------
+現在のディレクトリ構成
+--------------------------------------------------
+  aivis_core/        エンジン非依存のストリーミング音声合成コア (Python パッケージ)
+  addon_src/         NVDA アドオンのソース
+  scripts/           検証・計測・ビルド用スクリプト
+  dist/              ビルド済みアドオン (aivisStream-0.1.0.nvda-addon)
+  build/             アドオンのステージング (ビルドのたびに作り直す)
+  ref/               原本 (AivisSpeech-Engine, Style-Bert-VITS2 フォーク)
+  tools/py313/       開発用 Python 3.13 x64 (embeddable)。検証用に transformers 等も入っている
+  work/              計測の出力 (wav など)。bert_int8.onnx (475MB) は比較実験用で不要なら削除可
+
+--------------------------------------------------
+03:57 実機 NVDA で初回テスト → 失敗 (ユーザー報告)
+--------------------------------------------------
+- エラー: pyopenjtalk → tsqyomi → pydantic → `from zoneinfo import ZoneInfo`
+  ModuleNotFoundError: No module named 'zoneinfo'
+- 原因: NVDA は py2exe でビルドされており、library.zip には NVDA 自身が使う標準ライブラリしか入っていない。
+  ハーネスは開発用 Python の完全な標準ライブラリで動かしていたので検出できなかった。
+- ユーザーの NVDA (C:\Users\yuki\Documents\soft\For Brind\SCR Reader\NVDA21.2, 読み取りのみ) を確認:
+  python313.dll (= Python 3.13 x64 の前提は正しかった)、numpy は非同梱。
+  .pyd では _zoneinfo, _sqlite3 (+sqlite3.dll) が無い。
+
+--------------------------------------------------
+04:00-04:08 修正
+--------------------------------------------------
+- build_addon.py: 開発用 Python 3.13 の python313.zip (標準ライブラリ一式) と _zoneinfo.pyd,
+  _sqlite3.pyd, sqlite3.dll を deps/_stdlib/ に同梱。
+- _aivis/__init__.py: deps, deps/_stdlib/python313.zip, deps/_stdlib を sys.path の「末尾」に追加
+  (NVDA 側にあるモジュールは NVDA のものが優先され、足りないものだけ補われる)。
+- nvda_harness.py: 環境変数 NVDA_DIR を指定すると、標準ライブラリも本物の NVDA の library.zip と .pyd
+  だけにして動かすモードを追加。修正前の構成ならこのモードで同じエラーになる。
+  → 修正後は全シナリオ合格。同梱の _stdlib から読み込まれたのは zoneinfo / _zoneinfo のみ
+    (= 足りなかったのは zoneinfo だけ)。
+  性能は以前と同等 (短い発話 178ms, 連打 中央値 196ms, 音切れ 0)。
+- dist/aivisStream-0.1.0.nvda-addon を再ビルド (218MB)。
+
+--------------------------------------------------
+実機 NVDA で再テスト → 発声に成功 (ユーザー報告)
+--------------------------------------------------
+
+--------------------------------------------------
+04:10-04:37 速度変更を Sonic (NVDA 同梱) による後処理に変更
+--------------------------------------------------
+- ユーザー報告: 速度を上げると聞き取りにくい (AIVIS のモデル側の話速 length_scale で速くしていた)。
+  → AIVIS の話速は 1.0 固定にし、生成した音声を後から高速化する方針に。
+- NVDA 同梱の Sonic を使用: NVDA\synthDrivers\sonic.dll と synthDrivers._sonic (library.zip 内)。
+  API は NVDA\_synthDrivers32\_sonic.py (ソース) で確認: SonicStream(rate, ch), speed, writeShort,
+  readShort, flush, samplesAvailable。
+- _aivis/__init__.py:
+  - NVDA の速度 0..100 → 再生速度 0.5..4 倍 (50 で等倍、指数的)。rate_to_speed()
+  - 合成スレッドで PCM を Sonic に通してから再生キューへ。Sonic は speak 1 回ごとに作り、
+    テキストの区切り (インデックスの直前) でだけ flush する (途中で flush すると歪むため)。
+    → インデックスの通知位置は高速化後の音声でも正しい。
+  - BreakCommand の無音も速度に合わせて短くする。
+  - Sonic が読み込めない環境ではモデル側の話速で代用 (従来どおり)。
+- ハーネス: NVDA_DIR 指定時は globalVars.appDir と synthDrivers.__path__ (library.zip/synthDrivers) を
+  本物の NVDA に向け、本物の _sonic.pyc と sonic.dll (読み取りのみ) で動かす。
+  速度 75/90/100 で短文と 5 文の連続読みを追加。
+- 結果と調整:
+  (1) 最初は 4 倍速で最初の音が 290〜340ms、文の境目で 91ms の音切れ。
+      最初に溜める量を「出力側で 150ms」= 600ms 分の元音声にしていたのが遅延の原因。
+      → 出力側 100ms (最低 150ms) に。
+      区間長の上限 64→128 フレーム (のりしろ 12×2 フレームの無駄が 37%→19%)。合成の RTF 0.21→0.14。
+  (2) 次の文の前段 (g2p/BERT/front) を別スレッドで先回りしてデコードと並行させる案を実装して試した
+      → 逆に悪化 (3 倍速でも 136ms の音切れ、最初の音も 230〜400ms)。前段のスレッド数を 4/2 に絞っても改善せず。
+      ハイブリッド CPU で 2 つの推論が CPU を奪い合うため。→ 不採用。begin()/decode() の API だけ残し、
+      前段は decode() の中で同じスレッドで実行する形に戻した。
+- 最終結果 (本物の NVDA の標準ライブラリ + Sonic, CPU):
+    速度 50 (等倍)   : 最初の音 172〜201ms、音切れ 0
+    速度 75 (2 倍)   : 最初の音 184〜213ms、連続読み 19.0s → 9.5s、音切れ 0
+    速度 90 (約 3 倍): 最初の音 189〜210ms、連続読み 6.3s、音切れ 0
+    速度 100 (4 倍)  : 最初の音 約 290〜310ms、連続読み 4.7s、テキストの先頭で 10〜66ms の小さな音切れが 1〜3 回
+      (短いテキストの前段 100〜150ms が 4 倍速の再生時間を上回るため。合成能力の限界付近)
+- dist/aivisStream-0.1.0.nvda-addon を再ビルド。
+
+--------------------------------------------------
+2026-11-03 高さ (ピッチ) 設定を追加 (ユーザー依頼)
+--------------------------------------------------
+- 高さも Sonic で変える (SonicStream.pitch。速さは変えずに声の高さだけ変える)。
+  AIVIS (Style-Bert-VITS2) のモデル自体には高さを変える入力が無いため。
+- aivis.py: PitchSetting を追加、supportedCommands に PitchCommand を追加。
+- _aivis/__init__.py:
+  - pitch_to_factor(): NVDA の高さ 0..100 → 倍率。50 で等倍、0 で半オクターブ下 (0.707 倍)、
+    100 で半オクターブ上 (1.414 倍)。大文字のピッチ変更 (既定 +30) では 1.23 倍 (約 3.6 半音)。
+  - 速度か高さのどちらかが標準でなければ Sonic を通す。
+  - Rate/Pitch/VolumeCommand の解釈を _prosody() にまとめた。NVDA の command.multiplier は
+    offset 指定 (大文字の高さ変更は PitchCommand(offset=30)) のとき NVDA 側の設定値から計算するので、
+    _offset / _multiplier を直接見て、ドライバの現在値に当てはめる
+    (NVDA の library.zip の speech/commands.pyc を逆アセンブルして属性名を確認)。
+  - 合成ループ後半の重複した Rate/Volume 処理を削除 (値は plan に入っている)。
+- 確認:
+  - scripts/check_pitch.py: 本物の sonic.dll で高さを変え、基本周波数を自己相関で測定。
+    高さ 0/20/50/80/100 → 実測の比 0.706/0.810/1.000/1.228/1.413 (狙いどおり)。長さは変わらない (1.52s)。
+  - ハーネス (本物の NVDA 標準ライブラリ + Sonic): 高さ 20/80 の短文、大文字の高さ変更を挟んだ読み上げ、
+    速度 80 + 高さ 70 の連続読みを追加 → すべて音切れ 0、最初の音 171〜214ms、インデックスも正しい。
+    既存のシナリオも従来どおり (連打の中央値 192ms、古い音声の混入はすべて即停止)。
+- readme の速度の説明 (古い 1/3〜3 倍のまま) を直し、高さの説明を追加。
+- dist/aivisStream-0.1.0.nvda-addon を再ビルド。
+- 実機 NVDA で確認 → 問題なし (ユーザー報告)。
+
+--------------------------------------------------
+2026-11-03 最大速度を 5 倍に。合成の高速化の余地を調査 (ユーザー依頼)
+--------------------------------------------------
+- 依頼: 最大速度を 5 倍に。Sonic だけで 5 倍にするのはまずいので高速化の余地を検討し、
+  無理なら AIVIS 側の速度変更を使う。
+- 調査 1: 段ごとの処理時間 (scripts/prof_stages.py → work/prof_stages.txt)
+  短いテキスト 1 つあたり g2p ≒1ms, BERT 45〜50ms, 前段 30〜55ms, デコーダが残り全部 (全体の 6〜7 割)。
+  合成全体の RTF ≒ 0.18〜0.25 → 5 倍再生 (RTF 0.2 が必要) ではほぼ余裕ゼロ。
+- 調査 2: デコーダの設定 (scripts/bench_dec3.py → work/bench_dec3.txt)
+  スレッド 4/6/8/12/16、最適化レベル ALL、denormal を 0 扱い、P コアへのスレッド固定、区間長 128/256/512
+  → どれも現行 (8 スレッド, EXTENDED) より速くならない (RTF ≒ 0.10 が最良)。区間を大きくしても数 % 程度。
+- 調査 3: GPU (DirectML) (scripts/bench_dml.py → work/bench_dml.txt)
+  デコーダだけを連続で回すと RTF 0.02〜0.05、1 区間 7ms と非常に速い。
+  しかし実際の使い方 (BERT/前段の CPU 処理を挟む、発話の間は待機) では GPU が省電力状態 (P5, 525MHz)
+  に落ち、1 区間 60〜70ms かかり CPU と大差なし。前段を GPU で動かすと 200ms 超 (CPU は 55ms)。
+  初めての入力の形でも再コンパイルは起きていない (遅いのはクロックのせい)。
+  → 遅延の改善にならず、内蔵 GPU のノート PC ではさらに不利なので不採用。
+- 実装した改善 (CPU):
+  - engine.decode(first_chunk_frames=): 最初の区間を「最初に溜める量」分まとめて 1 回でデコード。
+    以前は 16→32 フレームと刻んでいて、区間ごとののりしろ (24 フレーム) の分だけ余計にかかっていた。
+  - _aivis: 再生待ちの音声がどれだけ残っているかを見積もり (_queued_until)、
+    0.4 秒以上残っていれば次のテキストは最初から 128 フレーム、0.25 秒以上なら 64 フレームでデコード。
+- 速度 5 倍の比較 (ハーネスの HARNESS_QUICK=1 モード、各 2 回):
+    Sonic だけで 5 倍            : 連続読みで 5〜204ms の音切れ (文の途中にも出る)
+    Sonic 4 倍 × AIVIS 1.25 倍   : 連続読みの音切れ ほぼ 0 (1〜6ms が 1 回あるかどうか)
+  → Sonic の上限を 4 倍 (SONIC_MAX_SPEED) とし、超えた分は AIVIS 側の話速で速くする (split_speed())。
+    AIVIS 側を速くするとデコードするフレーム数も 2 割減るので合成が間に合う。
+    速度 0..100 → 0.5..5 倍 (MAX_SPEED 5.0)。AIVIS 側が 1.0 を超えるのは速度 94 以上だけ。
+- 最初に溜める量 (再生時間で 100ms) を 60/40ms に減らす案も試した → 速度 95/100 で 20〜100ms の音切れが戻る。
+  100ms のまま (FIRST_BUFFER_PLAY_MS)。
+- 残る限界: 「ファイル」「編集」のような極端に短いテキストが続くと (メニュー項目の連続読みなど)、
+  3.5 倍以上で項目の間に 10〜90ms の間 (ま) が空く。テキストごとに BERT+前段で約 100ms かかり、
+  それが 1 項目の再生時間 (0.15 秒前後) を上回るため。項目の切れ目なので文の途中が途切れるわけではない。
+  次のテキストの前段を並行して先に進める案は以前 CPU の奪い合いで悪化したため見送り。
+- 全シナリオのハーネス (本物の NVDA 標準ライブラリ + Sonic):
+    等倍: 最初の音 170〜192ms、音切れ 0 / 2 倍・3.6 倍: 音切れ 0
+    5 倍: 最初の音 241〜287ms、連続読みで 6ms の音切れ 1 回 / 高さ・大文字: 音切れ 0
+    連打の中央値 198ms、古い音声の混入はすべて即停止。
+- readme の速度の説明を 5 倍に更新。dist/aivisStream-0.1.0.nvda-addon を再ビルド。
+
+--------------------------------------------------
+2026-11-03 CUDA の検討 (ユーザー質問: CUDA 加速は? CPU 処理を減らせない?)
+--------------------------------------------------
+- onnxruntime-gpu 1.24.4 + CUDA 12 / cuDNN の DLL を tools/ort_cuda に pip --target で隔離して導入 (OS には入れていない)。
+  - cuDNN 9.27 (最新) はユーザーのドライバ 536.67 (CUDA 12.2 世代) に無い関数 (cuStreamGetGreenCtx) を使っていて
+    初期化に失敗し、ORT が黙って CPU に戻っていた → cuDNN 9.1.1 に固定すると動く。
+  - 注意: pip install --target --upgrade は nvidia フォルダごと置き換えるので、cuDNN だけ差し替えると
+    CUDA ランタイムが消える (一度これで CPU に戻っていた)。作り直すときは全部まとめて入れる。
+- 段ごとの比較 (scripts/bench_cuda.py, 15 テキスト, 連続実行):
+    BERT: CPU 47ms → CUDA 8ms / 前段: CPU 43ms ← CUDA 121ms (遅い) / デコーダ RTF: CPU 0.12 → CUDA 0.05
+  → BERT とデコーダは GPU、前段は CPU に分けるのが最良。最初の音まで CPU 138ms → 分割 CUDA 90ms、
+    CPU 使用時間 (音声 1 秒あたり) 0.15 秒 → 0.01〜0.04 秒。
+  - cudnn_conv_algo_search: HEURISTIC は同じ形の入力の繰り返しでは速いが、実際は区間の長さが毎回変わるので
+    DEFAULT の方が速い (最初の音 90ms 対 123ms)。DEFAULT のまま。
+  - DirectML も同じ分割にすると改善 (前段 220ms → CPU 52ms) するが、CUDA には及ばない。
+- engine.py: AivisModel(front_providers=) を追加。AivisCore は GPU 使用時も前段だけ CPU で動かす。
+- CUDA パック (別アドオン aivisCudaPack): scripts/build_cuda_pack.py → build/aivisCudaPack (2.1GB, 未圧縮)
+  必要な DLL は実測で絞った: cublas, cublasLt, cufft, cudart, cuDNN 7 個 (cudnn_adv = RNN 用は不要)。
+  curand / nvrtc / nvJitLink / TensorRT プロバイダは不要。
+  本体側: paths.find_cuda_pack() (addons\aivisCudaPack\cuda か 設定フォルダ\aivis\cuda)。見つかれば
+  sys.path の先頭に置いてパックの onnxruntime を使い、GPU を使う設定なら CUDA の DLL を先に読み込む。
+  読み込みに失敗したら同梱の onnxruntime に戻す。パックが無ければ従来どおり (ハーネスで確認済み、変化なし)。
+- ハーネス (HARNESS_GPU=1, CUDA パック):
+    連打の中央値 144ms (CPU 201ms)、5 倍の連続読み 最初の音 137〜144ms・音切れ 0、
+    短いテキストの連続 (メニュー項目) も 3.6〜4 倍で音切れ 0 (CPU では項目間に 10〜90ms)。
+  ただし、しばらく (2 秒以上) 何も読まなかった後の最初の発話が遅い: 250〜390ms (CPU は約 190ms)。
+- 遅くなる原因の調査 (scripts/trace_cuda_short.py: 推論呼び出しごとの時間):
+  - 待機 0.5 秒以内: BERT 8ms, デコーダ 1 区間 37ms。待機 2〜5 秒後: BERT 90ms, デコーダ 100〜160ms。
+  - 「Conv running in Fallback mode」の警告が大量に出る。cuDNN 9.5/9.8/9.10/9.13 でも同じ
+    (新しいほどデコーダはむしろ遅い: 9.10 以降 約 100ms/区間)。ORT がこのモデルの 1 次元畳み込みに
+    cuDNN の新しい API を使えないためで、バージョンでは直らない。→ 9.1 のまま。
+  - GPU を小さな処理で回し続けて (50ms / 200ms ごと) クロックを保つ案 → 改善せず。
+    デコーダは GPU の計算そのものより、CPU 側から大量の小さな処理を GPU に送る部分が律速で、
+    待機後は CPU 側の立ち上がりも遅いと考えられる。
+- 結論 (現時点): CUDA は「連続して読む」場面 (連続読み・高速・連打) と CPU 負荷の削減には大きく効くが、
+  スクリーンリーダーで一番多い「しばらく黙っていた後の 1 発話目」は CPU より遅い。パックも 2.1GB と大きい。
+  次の案: 1 発話目の最初の区間だけ CPU で作り (BERT もこの間は CPU)、2 区間目以降を GPU に回す。
+
+--------------------------------------------------
+2026-11-03 CUDA ランタイムのバージョンを VSU に合わせる (ユーザー依頼)
+--------------------------------------------------
+- VSU (C:\Users\yuki\Dropbox\software\ACTLab\NVDA\VSU, 読み取りのみ) の globalPlugins\VSU\cuda_installer.py:
+  ONNX Runtime 1.17.3 + cuDNN 8 (CUDA 11)。「1.23.2 は CUDA で大幅に遅かったため据え置き」とのコメント。
+- onnxruntime 1.17 には Python 3.13 用が無い。Microsoft の onnxruntime-cuda-11 フィードで cp313 があるのは
+  1.20.0 / 1.20.1 だけ → 1.20.1 (CUDA 11.8 + cuDNN 8.9.5) を tools/ort_cuda11 に隔離して導入。
+  cuDNN 8 の依存の zlibwapi.dll は VSU と同じ winimage の zlib123dllx64.zip から (work/dl_zlib)。
+  onnxruntime 1.20 には preload_dlls() が無いので、DLL を依存順に読み込む処理を書いた
+  (scripts/_cuda_loader.py、アドオンは _aivis/__init__.py の _preload_cuda_dlls)。
+- 比較 (scripts/bench_cuda.py, 15 テキスト連続, BERT とデコーダが GPU・前段は CPU):
+    組み合わせ                          Fallback 警告  最初の音  デコーダ RTF  CPU 秒/音声秒
+    1.20.1 + CUDA 11.8 + cuDNN 8.9       0             58ms      0.015         0.024
+    1.20.2 + CUDA 12   + cuDNN 9.1       7762          92ms      0.058         0.032
+    1.24.4 + CUDA 12   + cuDNN 9.1       2494          98ms      0.052         0.057
+    1.31.1 (最新)                        0             208ms     0.099         0.114 (CUDA が実質使われていない)
+  → 遅さの原因は ORT のバージョンではなく cuDNN 9。cuDNN 9 ではこのモデルの 1 次元畳み込みが Fallback mode になる。
+    VSU の「古い版が良い」と同じ結論。
+  新しい入力の形のときの追加コストは 1.20.1 では 5ms 程度 (scripts/bench_cuda_shapes.py)。
+- CUDA パックを 1.20.1 + CUDA 11.8 + cuDNN 8.9 に作り直し (scripts/build_cuda_pack.py)。
+  必要な DLL: cublas64_11, cublasLt64_11, cufft64_10, cudart64_110, cudnn64_8, cudnn_ops_infer64_8,
+  cudnn_cnn_infer64_8, zlibwapi (学習用 *_train・RNN 用 adv_infer・TensorRT は不要)。
+  展開後 1992MB、dist/aivisCudaPack-0.1.0.nvda-addon は 1128MB。
+  注意: CUDA 11.8 は RTX 50 シリーズ (Blackwell) 非対応。
+- 待機後の 1 発話目の対策を 3 通り試した (scripts/trace_cuda_short.py とハーネス):
+  (a) 待機後は BERT を CPU で計算 + GPU に 1 回ダミー推論 → 改善せず (ダミーの BERT が本番のデコードと競合)
+  (b) 待機後は BERT もデコーダも CPU で始め、別スレッドでダミー推論を繰り返して GPU が速くなったら切り替え
+      → GPU は 0.5 秒以上起ききらず、ダミー推論の CPU 待ち (CUDA のスピン) が CPU 側の推論を遅くして悪化
+  (c) BERT だけ CPU (1 秒以上待機後) → 対策なしと差がない
+  → どれも効果がなく、CPU に BERT の控えを持つと 1.3GB 余分に使うので、すべて取り外した (engine.py に NOTE)。
+- 最終ハーネス (本物の NVDA 標準ライブラリ + Sonic):
+                         CPU のみ      CUDA パック
+    short / menu         185 / 194ms   171 / 144ms
+    キャンセル直後        260ms         82ms
+    速度 75 short        227ms         99ms
+    速度 90 / 100 short  285 / 296ms   339 / 363ms (連続読みの後 = 数秒待機した GPU。ここだけ CPU より遅い)
+    連続読み (90/100)    279 / 251ms   82 / 79ms
+    連打の中央値         200ms         114ms (別の回では 85〜91ms)
+    音切れ               0             0
+  パックが無い場合の動作は従来どおり。dist/aivisStream-0.1.0.nvda-addon を再ビルド。
+
+--------------------------------------------------
+2026-11-03 不要なファイルの削除 (ユーザー了承済み)
+--------------------------------------------------
+- 削除: tools/ort_cuda (CUDA 12 + cuDNN 9.1, 2.8GB), tools/ort_cu12_1.20.2, tools/ort_cu12_1.31.1
+  (中の nvidia はジャンクションなので先にリンクだけ外した), work/cudnn_9.* (4 版), work/cuda_min,
+  work/cudnn_adv64_9.dll, work/bert_int8.onnx。計 約 9.5GB。
+- 残したもの: tools/ort_cuda11 (CUDA パックの元。scripts/build_cuda_pack.py が使う), tools/py313, work/dl_zlib。
+- scripts/bench_cuda.py, bench_cuda_dec.py の既定の CUDA パックを tools/ort_cuda11 に変更。
+  bench_cuda_dec.py (preload_dlls を使う) と trace_cuda_short.py の CUDNN_DIR モードは cuDNN 9 の比較実験用で、
+  削除した tools/ort_cuda が前提のため今はそのままでは動かない (記録として残す)。
+
+--------------------------------------------------
+2026-11-03 実機で CUDA パックの動作を確認 (ユーザー報告)。GPU 使用時は AIVIS 側の速度変更を無効に
+--------------------------------------------------
+- ユーザー: CUDA パックで動いた。GPU 利用時は AIVIS 側の速度変更を完全に無効にできるはず。
+- _aivis/__init__.py: split_speed(rate, sonic, gpu)。CUDA で合成しているとき (Runtime._fast_gpu) は
+  AIVIS 側の話速を常に 1.0 にし、5 倍まで Sonic だけで速くする。
+  DirectML はデコーダが CPU と大差ない (RTF 約 0.1) ので従来どおり (Sonic 4 倍まで + 残りを AIVIS 側)。
+- ハーネス (HARNESS_QUICK, 各 2 回):
+  CUDA: 速度 90/95/100 の分割は (1.0, 3.62) / (1.0, 4.26) / (1.0, 5.0)。
+        短文・連続読み・短いテキストの連続とも音切れなし (起動直後の 1 回だけ 28ms)。
+        最初の音: 連続読み 82〜115ms、短文 88〜146ms (起動直後の 1 回目は 291ms)。
+  CPU (パック無し): 従来どおり (1.06, 4.0) / (1.25, 4.0)。連続読みの音切れ 0 (4 回)。
+        1 回だけ 63〜89ms の音切れが出たが、再測定では再現せず (一時的な負荷によるもの)。
+- readme の速度の説明を更新。dist/aivisStream-0.1.0.nvda-addon を再ビルド (CUDA パックは変更なし)。
+- 実機 NVDA で動作を確認 (ユーザー報告)。
+
+--------------------------------------------------
+2026-11-03 CUDA 加速を VSU と同じダウンロード方式に (ユーザー依頼)
+--------------------------------------------------
+- VSU (globalPlugins\VSU\cuda_installer.py) の方式: NVDA メニューの「VSU」→「CUDA加速をインストール」で
+  配布元から直接ダウンロードし、次回起動時に有効化。同じ形にした。
+- ダウンロード元 (scripts/cuda_sources.py で URL・サイズ・sha256 を取得):
+    onnxruntime-gpu 1.20.1 cp313 (CUDA 11)  Microsoft onnxruntime-cuda-11 フィード  180MB
+    nvidia-cuda-runtime-cu11 11.8.89 / nvidia-cublas-cu11 11.11.3.6 / nvidia-cufft-cu11 10.9.0.58 /
+    nvidia-cudnn-cu11 8.9.5.29  (PyPI)  1MB / 427MB / 172MB / 712MB
+    zlib123dllx64.zip (winimage, VSU と同じ)
+- どのサーバーも HTTP Range に対応 → wheel (ZIP) の目次だけ読んで必要な DLL だけを取り出す
+  (_aivis/remote_zip.py: HttpRangeFile を zipfile に渡す)。ダウンロード量 1423MB → 1128MB
+  (cuDNN の学習用 DLL などを落とさない)。Range 非対応なら全体をダウンロードしてから取り出す。
+- scripts/make_cuda_manifest.py → _aivis/cuda_manifest.json: 取り出す 30 ファイルの名前・大きさ・sha256。
+  sha256 は動作確認済みの tools/ort_cuda11 から計算 → 取り出した中身を 1 つずつ照合 (改ざん・破損を検出)。
+  全体をダウンロードした場合は wheel 全体の sha256 も照合。
+- _aivis/cuda_installer.py (NVDA 非依存): install() は 設定フォルダ\aivis\cuda_pending に入れて .complete を書く。
+  activate_pending() は NVDA 起動時 (CUDA の DLL を読み込む前、_aivis/__init__.py の先頭) に cuda へ切り替える。
+  削除は cuda_remove の印を置いて次回起動時に削除 (読み込み済みの DLL は消せないため)。
+- globalPlugins/aivisStream: NVDA メニューに「AIVIS Stream」→「CUDA 加速をインストール」「CUDA 加速を削除」。
+  NVIDIA ドライバ (System32\nvcuda.dll) が無ければ中止。確認 (既定は「いいえ」) → 進捗ダイアログ
+  (キャンセル可、VSU と同じ形) → 完了後に useGpu をオンにして再起動を確認 (core.restart())。
+  gui.message.MessageDialog などの名前はユーザーの NVDA の library.zip で確認済み。
+- 確認:
+  - 実際にダウンロードしてインストール (work/ 内): 137 秒、以前の CUDA パックと 30 ファイルすべて一致。
+  - 全体ダウンロードの経路、キャンセル (途中のファイルが残らない)、sha256 不一致の検出、有効化、削除予約: すべて OK。
+  - ダウンロードしたものを cuda_pending として置き、ハーネス (本物の NVDA 標準ライブラリ) を起動
+    → 起動時に cuda へ切り替わり、その onnxruntime で CUDA 推論。音切れ 0、連打の中央値 107ms。
+- 別アドオンの CUDA パック (dist/aivisCudaPack, build/aivisCudaPack) と試験用のダウンロード (約 6GB) は削除。
+  scripts/build_cuda_pack.py はオフライン配布用に残す。以前のパック (addons\aivisCudaPack) も引き続き認識する
+  (ダウンロード版がある場合はそちらが優先)。
+- readme に CUDA 加速の節を追加。dist/aivisStream-0.1.0.nvda-addon を再ビルド。
+- 2026-11-04 実機 NVDA でメニューからのダウンロード・インストールと CUDA での読み上げを確認 (ユーザー報告)。
+
+--------------------------------------------------
+2026-11-04 動作に最低限必要なものを同梱。ライセンス確認、ビルド時ダウンロード、.gitignore (ユーザー依頼)
+--------------------------------------------------
+- VSU の sconstruct を参照: ビルド時にコア DLL・onnxruntime・DirectML・OpenJTalk 辞書・音声モデル 1 つを
+  配布元からダウンロードし、.gitignore で除外している。同じ形にした。
+- ライセンス確認の結果:
+    Python 依存 (PyPI): numpy BSD-3 等 / onnxruntime-directml MIT / onnx, ml_dtypes, SudachiPy, sudachidict_core Apache-2.0 /
+      protobuf BSD-3 / pyopenjtalk-plus MIT (Open JTalk 等は修正 BSD) / pydantic, pydantic_core, annotated_types,
+      typing_inspection, jaconv MIT / typing_extensions PSF / num2words LGPL-2.1 → いずれも再配布可
+    DirectML.dll 1.15.4 (onnxruntime-directml に含まれる): Microsoft のライセンス。アプリに組み込んでの再配布可。
+      ライセンス文書は wheel に無いので NuGet パッケージ (202MB) から LICENSE.txt と ThirdPartyNotices.txt だけを
+      Range で取り出して同梱
+    e2k (tsukumijima フォーク @ 9920754): Unlicense。PyPI の 0.6.2 は中身が違う (モデルも違う) ので GitHub から
+    Python 標準ライブラリ (埋め込み版 3.13.9): PSF-2.0
+    BERT tsukumijima/deberta-v2-large-japanese-char-wwm-onnx: CC BY-SA 4.0 (ku-nlp のモデルの ONNX 版)。
+      無改変で同梱し、出典とライセンスを LICENSE.md に記載
+    音声合成モデル: Anneli (a59cb814) は ACML 1.0 = 再配布可 (営利も可)、配布時にライセンス文書の添付が条件。
+      AivisHub の最新は v1.2.0 で名前は「まお」に変わっている (手元の AivisSpeech のものは v1.0.0)。
+      KikotoMahiro-Lite は ACML 非営利版、にせ は ACML 1.0。→ AivisSpeech の標準モデルの「まお」を同梱
+    AivisSpeech Engine の既定辞書 38 個: リポジトリは LGPL-3.0 だが、辞書ごとの出典・ライセンスの記載が見つからない
+      (SKK 辞書は GPL、wiktionary/jawiki 由来は CC BY-SA の可能性、pixiv・医療辞書などは不明)。
+      pyopenjtalk-plus 内蔵の辞書で動くので、既定では同梱しない (--with-aivisspeech-dictionaries で同梱可)
+    ★ 要判断: aivis_core/nlp は Style-Bert-VITS2 (AGPL-3.0) 由来。NVDA は GPL-2.0 で、アドオンは GPL-2.0 で
+      配布できる必要がある (copying.txt「Non-GPL Components in Plugins and Drivers」)。AGPL-3.0 は GPL-2.0 と
+      両立しないため、公開配布の前に扱いを決める必要がある。
+- scripts/third_party.py: ダウンロード元・ライセンスの一覧と fetch()。sha256 は scripts/third_party_pins.json に固定
+  (PyPI は公開 sha256、HF は LFS の oid、AivisHub は API の checksum、それ以外は --update-pins で計算)。
+  ダウンロードは build/cache/ に保存して使い回す。
+- scripts/build_addon.py: tools/py313 の site-packages からのコピーをやめ、すべてダウンロードしたものから組み立てる。
+  wheel を展開 → deps/、e2k は GitHub のアーカイブの src/e2k、標準ライブラリは埋め込み版から、
+  BERT → _aivis/data/bert/、モデル → _aivis/data/models/ (+ モデルに埋め込まれた ACML の文書を書き出し)、
+  doc/ja/third_party.html (同梱物とライセンスの一覧) を生成。
+  確認: 展開した依存ライブラリは動作確認済みの tools/py313 と 644 ファイル一致 (e2k の 2 ファイルは改行コードだけの差)。
+  標準ライブラリの zip も一致。
+- paths.py: 同梱の data/bert, data/models も探す (BERT はユーザー → 同梱 → AivisSpeech の順)。
+  engine.AivisCore は同じ UUID のモデルが複数あれば先のものを使う (音声の一覧と揃えた)。
+- 確認: APPDATA を空のフォルダに向けて (= AivisSpeech が無い環境) ハーネスを実行
+  → 同梱の BERT と「まお」v1.2.0 だけで動作。全シナリオ音切れ 0、連打の中央値 132ms。
+- dist/aivisStream-0.1.0.nvda-addon: 999MB (展開後 1372MB)。
+- .gitignore (build/, dist/, tools/, ref/, work/, __pycache__ など)、README.md (構成・開発環境・ビルド手順・
+  ライセンスの注意)、requirements-dev.txt を作成。
+- 訂正 (ユーザー指摘): NVDA は最近 GPL-2.0-or-later になっている。
+  github.com/nvaccess/nvda の master の copying.txt: 「NVDA is available under the GNU General Public License
+  version 2 or later, with two special exceptions」、プラグインの条件も「GPL version 2 or later で配布できること」。
+  (手元の NVDA 2026.1 の documentation\copying.txt はまだ「version 2」。README の変更は #19251)
+  → GPL-2.0-or-later は GPL-3.0 として扱え、GPL-3.0 と AGPL-3.0 は組み合わせられる (AGPL-3.0 第 13 条) ので、
+    AGPL-3.0 の Style-Bert-VITS2 由来コードを含んでも公開できる見込み (自分たちのコードは GPL-2.0-or-later
+    または GPL-3.0-or-later、取り込んだ部分は AGPL-3.0 のまま)。最終判断は公開前に。README を修正。
+- 決定 (ユーザー): このアドオンのライセンスは AGPL-3.0。
+  リポジトリ直下に LICENSE (AGPL-3.0 全文。aivis_core/LICENSE_style_bert_vits2 と同じ文書) を置き、
+  ビルドでアドオン直下に LICENSE.txt としてコピー。README・アドオンの readme・third_party の記述を更新。
+  dist/aivisStream-0.1.0.nvda-addon を再ビルド。
+- 決定 (ユーザー): AGPL-3.0-or-later。各 Python ファイルの先頭に SPDX ヘッダーを入れた (scripts/add_license_headers.py)。
+  - 自作のファイル (engine.py, addon_src, scripts など): AGPL-3.0-or-later + Copyright (C) 2026 AIVIS Stream contributors
+  - Style-Bert-VITS2 から取り込んだファイル (元のコードと 96〜100% 一致: nlp/symbols, nanairo_emoji,
+    japanese/g2p, g2p_utils, itaiji_map, katakana_map, mora_list, normalizer, __init__): Style-Bert-VITS2 は
+    「AGPL v3.0」としか書いておらず or later を付けられないので AGPL-3.0-only のまま、出典 (commit b937361) を明記
+  - 一部を流用したファイル (bert_models.py 23%, frontend.py 20% 一致): AGPL-3.0-only + 出典
+  → アドオン全体としては AGPL-3.0 の条件で配布される。README・アドオンの readme・third_party の記述を更新。
+  53 ファイルに追加、2 回目の実行では変更なし。全ファイル compile OK、ハーネス (同梱物のみ) OK。再ビルド。
+- 著作権者を「yamahubuki, ACT Laboratory」に (ユーザー指定)。ヘッダー 44 ファイルと add_license_headers.py、
+  manifest.ini の author (仮の aivis-core-dev から) も同じ名前に。再ビルド。
+- 修正 (ユーザー指摘「コア部分の各ソースは元の表記も残さないとまずい」): 取り込んだファイルのヘッダーに
+  元の著作権者が無かった (出典とライセンスだけ) ので追加。
+  - 著作権者は ref/sbv2 の git log の作者から: ほぼ tsukumijima, litagin02。symbols.py は Bert-VITS2 (fishaudio) の
+    作者たち (Stardust-minus ほか) も。nanairo_emoji, itaiji_map, katakana_map は tsukumijima。
+    Style-Bert-VITS2 の pyproject.toml は license = "AGPL-3.0-only" → only のままで正しいことを確認。
+  - 元のファイル (コミット b937361 の style_bert_vits2/...) と比べて改変の有無を判定し、改変したもの
+    (g2p, g2p_utils, normalizer, nanairo_emoji) には AGPL-3.0 第 5 条 a に従い「Modified by yamahubuki,
+    ACT Laboratory, 2026 (import paths, logging, pydantic -> dataclass)」、それ以外は「Unmodified」と記載。
+  - 一部を流用したもの (bert_models.py, frontend.py): 自分たちの著作権 + 「Portions Copyright tsukumijima, litagin02」。
+  - mora_list.py: VOICEVOX ENGINE (LGPL-3.0) 由来であることと、Open JTalk の著作権表示 (ファイル内に元からある) を案内。
+  - nlp/__init__.py と nlp/japanese/__init__.py は中身が空なので自作扱いに直した。
+  - scripts/add_license_headers.py は自分が付けたヘッダー部分だけを書き直す (元からあるコメントは残す)。2 回目は変更なし。
+  README・third_party の記述にもクレジットを追記。compile OK、ハーネス OK、再ビルド。
+
+--------------------------------------------------
+2026-11-04 配布用 readme を VSU に合わせて補完 (ユーザー依頼)
+--------------------------------------------------
+- VSU の addon/doc/ja/readme.md の章立て (概要 / システム要件 / インストール / GPU / 音声 / 合成パラメータ /
+  NVDA メニュー / CUDA / 英語の読み上げ / 今後に向けて / バージョン履歴 / 連絡先 / 著作権) と比べて足りない項目を追加:
+  システム要件 (Windows 10/11 64bit、メモリ、ディスク、GPU 任意)、インストール、音声について
+  (声の選び方、モデルの追加、★音声合成モデルの利用規約: 同梱の「まお」の ACML 1.0 の禁止事項の要約)、
+  合成パラメータの表、NVDA メニューの項目、CUDA の手順と注意事項、英語の読み上げ (e2k で自動カタカナ化)、
+  今後に向けて (既知の制限)、バージョン履歴 (0.1.0)、連絡先 (support@actlab.org。GitHub は未定のため未記載)、著作権。
+- 著作権の節を書くにあたり、pyopenjtalk-plus のバイナリに組み込まれた部品のライセンスを確認:
+  wheel には pyopenjtalk 本体 (MIT, Ryuichi Yamamoto)、辞書 naist-jdic (BSD, 奈良先端大)、HTS 音声 Mei (CC BY 3.0,
+  未使用だが wheel に含まれる) の文書しか無く、組み込まれている Open JTalk (tsukumijima/open_jtalk, 修正 BSD,
+  名工大 2008-2016)、hts_engine API (syoyo/hts_engine_API, 修正 BSD, 名工大・東工大)、MeCab (BSD, Taku Kudo / NTT)
+  の文書が無い。BSD はバイナリ配布時にドキュメントへの掲載が条件。
+  → scripts/third_party.py に 3 つの COPYING を追加 (サブモジュールの配布元、コミット固定 + sha256)。
+    build_addon.py で deps/pyopenjtalk/ に同梱し、third_party.html の末尾に 5 つの条文の全文を掲載。
+    readme の著作権の節には各部品の著作権表示を列挙し、全文は third_party.html を案内。
+- 見直しで直した点: 既定の声 (AivisSpeech があればそちらが先)、モデルの読み込みは NVDA の起動のたび。
+- dist/aivisStream-0.1.0.nvda-addon を再ビルド。
+
+--------------------------------------------------
+2026-11-04 BERT を fp32 版で同梱 (ユーザー提案: 変換済みを配布して読み込みを速く)
+--------------------------------------------------
+- Hugging Face の同じリビジョン (d701ec6) に作者が公開している fp32 版 model.onnx (1.3GB, LFS oid c5c880...) がある。
+  AivisSpeech の古いスナップショット (5ba0321) の model.onnx と sha256 一致。自分で変換したものではなく公開版を
+  無改変で同梱できる (CC BY-SA 4.0 の扱いは fp16 と同じ)。
+- 比較 (scripts/bench_bert_load.py、別プロセスで 3 回ずつ、CPU):
+    fp16 を読んでメモリ上で fp32 に変換: 読み込み 4.8〜5.0 秒、最大メモリ 4.4GB、読み込み後 2.6GB
+    fp32 版を直接読む                  : 読み込み 2.5〜2.6 秒、最大メモリ 1.5GB、読み込み後 1.4GB
+  推論速度は同じ (約 53ms)。特徴量の差は cos 0.999997 (fp32 版が元の精度。fp16 版はそこから落としたもの)。
+  変換方式では変換途中のコピーが残り、読み込み後も 1.2GB 余分に使い続けていた。
+  圧縮後の大きさ: fp16 573MB / fp32 1155MB → アドオンは 999MB → 1609MB。
+- → fp32 版を同梱 (third_party.py の bert-model を model.onnx に)。GPU のときも fp32 を使う。
+  fp16 しか無い場合 (利用者が自分で置いた場合) の変換処理は残す。
+- 結果 (同梱物のみ): コアの準備 9.0 秒 → 5.9 秒 (別の回では 3.8 秒)。CUDA でも動作 (連打の中央値 71ms)。
+- 不具合の修正 (GPU のテストで判明):
+  - CUDA の DLL の読み込みに失敗したとき、同梱の onnxruntime に戻そうとして、読み込み済みの CUDA 用 onnxruntime と
+    混ざって壊れていた (SessionOptions has no attribute 'has_providers')。読み込み済みの onnxruntime.dll は外せないので、
+    onnxruntime を読み込んだ後の失敗では戻さず、CUDA 用 onnxruntime を CPU で使うようにした (GPU 設定も CPU 扱い)。
+    onnxruntime 自体が読み込めないときだけ同梱のものに戻す。
+  - DLL の読み込みは推論に使わないもの (cudart32 などの 32 ビット版、学習用) を読み飛ばし、1 つ失敗しても
+    残りを読んでからまとめてログに出す (テストで pip そのままのフォルダを指したら 32 ビット版の DLL で止まった)。
+- readme のメモリの節を更新。dist/aivisStream-0.1.0.nvda-addon を再ビルド (1609MB)。
+
+--------------------------------------------------
+2026-11-04 名前を DASH (Direct Aivis Streaming Handler) に。VSU のアップデーターを搭載 (ユーザー依頼)
+--------------------------------------------------
+- 名づけのヒント (Dropbox\actlab\manual\ソフト公開\名づけのヒント.txt) に沿って候補を出し、ユーザーが DASH に決定
+  (指示は「aDASH」だったが先頭の a は入力ミスと判断)。MPEG-DASH (ストリーミング) / ダッシュ (速い)。
+- manifest: name = Direct Aivis Streaming Handler, keyword = DASH (actlab 独自項目。アップデーターがサーバーに送る名前),
+  summary = "DASH, Direct Aivis Streaming Handler", url = https://actlab.org/software/DASH。
+  シンセサイザー: synthDrivers/dash.py (name = "dash", 表示名 "DASH (AivisSpeech)")。
+  NVDA メニュー・グローバルプラグイン: globalPlugins/DASH。内部パッケージ _aivis・aivis_core・設定フォルダの aivis はそのまま。
+  配布ファイル名は VSU と同じく「<name>-<version>.nvda-addon」。
+- アップデーター: VSU の updater.py / compat.py / constants.py / updaterStrings.py を流用 (updaterUserAgent = DASH-updater、
+  サーバーには keyword = DASH を name として送る)。文言は VSU の日本語訳 (nvda.po) をそのまま書いた (DASH は locale を持たない)。
+  constants.py 先頭の「Reuse of this source code is prohibited.」は AGPL と矛盾するので除いた (同じ作者のコード)。
+  メニューに「起動時のアップデートチェックを無効化/有効化」「アップデートを確認」、設定 DASH_global.checkForUpdatesOnStartup。
+- 確認: 使っている NVDA の API はユーザーの NVDA の library.zip にすべてある。サーバーの応答:
+  name=DASH → {"code":404,"message":"Requested name is not registed."} (要登録)、VSU → 204。ハーネスで dash として動作。
+- 注意: シンセサイザー名が aivis → dash に変わったので、試用中の NVDA ではシンセサイザーの選び直しが必要。
+
+--------------------------------------------------
+2026-11-04 GitHub Actions でのビルド (VSU と同じ) (ユーザー依頼)
+--------------------------------------------------
+- 依頼: .github 以下は VSU の完全なコピーで編集しないこと (将来は全リポにコピペで更新する)。
+  途中でユーザーから「NVDA の 64 ビット化に伴い 32 ビットでビルドする意味はないので Python のバージョンと bit 数は変えてよい」。
+- VSU の .github/workflows (pullRequest / release / snapshot / testAndBuild) と tools/build.py・bumpup.py・download_gettext.py
+  をそのままコピー (cmp で一致を確認)。.github の変更は 2 ファイルの 2 行だけ (改行コード CRLF も保持):
+    architecture: x86 → x64、python-version: 3.8 → "3.12"
+  - 32 ビットでは不可: tools/build.py は ZIP (1.5GB) とアドオン (1.5GB) を f.read() で丸ごと読んでハッシュを計算する。
+    32 ビットの Python (LARGE_ADDRESS_AWARE なし = 2GB) では 2 つ分が入らない (1 つ分の 1.6GB は読めることは確認)。
+  - 3.13 は不可: tools/build.py の先頭の `from audioop import add` が、3.13 で audioop が削除されたため失敗する → 3.12。
+- 共通スクリプトが前提にする形にリポジトリを合わせた:
+  - addon_src/ → addon/ (tools/build.py が addon/ と addon/doc/ja/readme.md を見る)
+  - buildVars.py (ADDON_VERSION / RELEASE_DATE / NAME / KEYWORD / addon_info。bumpup.py が書き換える)、version.json、
+    manifest.ini.tpl → manifest.ini はビルド時に生成 (addon/manifest.ini は削除)
+  - sconstruct: `scons` で output/<ADDON_NAME>-<ADDON_VERSION>.nvda-addon を作る (scripts/build_addon.py --output を呼ぶ)
+  - requirements.txt: scons, markdown (VSU と同じ)
+  - build_addon.py: CI に onnx 等を入れずに済むよう、モデルの ACML の文書を取り出す処理を標準ライブラリだけで
+    ONNX の protobuf の最上位 (metadata_props = フィールド 14) を読む実装に置き換え (結果は以前と同一を確認)
+  - .gitignore: tools/ 全体ではなく開発用の py313・ort_cuda11 などだけを除外 (tools/*.py は管理する)。output/、
+    直下の DASH-*.zip・DASH-*_info.json、gettext の exe/dll なども除外
+- CI の再現 (work/ に Python 3.12.10 x64 の埋め込み版、管理対象のファイルだけを複製したリポジトリで):
+    スナップショット (GITHUB_ACTIONS=true): バージョン 2611.4.524 (コミット時刻から)、DASH-snapshot.zip 1533MB、
+      DASH-snapshot_info.json、Direct Aivis Streaming Handler-2611.4.524.nvda-addon 1535MB、manifest の version も一致
+    正式リリース (TAG_NAME=0.1.0): DASH-0.1.0.zip、DASH-0.1.0_info.json、…-0.1.0.nvda-addon
+    プルリクエスト (scons のみ): output/Direct Aivis Streaming Handler-0.1.0.nvda-addon
+  いずれも成功。GitHub のリリースの上限 (1 ファイル 2GB) 以内。再現用のフォルダは削除。
+- 成果物の名前はリポジトリ名で探されるので、GitHub のリポジトリ名は DASH にする必要がある。README に手順と注意を記載。
+
+--------------------------------------------------
+2026-11-04 GitHub リポジトリの状態
+--------------------------------------------------
+- GitHub に actlaboratory/DASH を作成 (ユーザー。公開、既定ブランチ master)。まだ空 (コミット・ワークフロー実行なし)。
+- 手元: git init 済み、83 ファイルを git add 済み (コミットは後で、とユーザー)、origin = https://github.com/actlaboratory/DASH.git
+  を登録済み。コミットメッセージの案は work/commit_msg.txt。
+- シークレット: DASH・VSU ともリポジトリ単位のシークレットは無し。VSU は組織単位のシークレットで動いている
+  (組織のシークレットは権限不足で一覧できず)。DASH で使えるかは組織のシークレットの公開範囲の設定次第。
+- gh は D:\dev\gh\bin\gh.exe (yamahubuki でログイン済み)。git の全体設定は変えずに、push のときだけ
+  -c credential.helper="!D:/dev/gh/bin/gh.exe auth git-credential" で使う。
+
+--------------------------------------------------
+2026-11-04 tsqyomi (文脈による読み分け) に対応 (ユーザー依頼)
+--------------------------------------------------
+- tsqyomi: pyopenjtalk-plus の文脈による読み分けモデル。tsukumijima/tsqyomi-models (Hugging Face)、ライセンス MIT
+  (Copyright (c) 2026 Aivis Project)。リポジトリ全体は約 590MB (v1〜v6) だが、pyopenjtalk-plus 0.4.1.post10 が使うのは
+  リビジョン 917a89d の v6 だけ: model.onnx 141MB + tokenizer.json 6.7MB + metadata.json 46KB (約 148MB)。
+  追加で HF Tokenizers (tokenizers 0.23.3, Apache-2.0) が必要。huggingface_hub はダウンロード用なので、
+  同梱して model_dir で読めば不要。
+- AivisSpeech Engine の使い方: tsqyomi.load_model(onnx_providers=["CPUExecutionProvider"], ...) で CPU 固定、
+  g2p(..., use_tsqyomi=tsqyomi.is_model_loaded())、読み込めなければ tsqyomi なしで続行。同じ形にした。
+- 計測 (scripts/bench_tsqyomi.py、49 文): g2p の時間 中央値 0.4→0.6ms (最大 1.8→9.0ms)、読み込み 1.1 秒、メモリ +0.3GB。
+  読みが変わったのは 4 文で、すべて文脈に合った読みに: 人気のない夜道 (にんき→ひとけ)、上手から役者が登場
+  (じょうず→かみて)、市場で魚を買う (しじょう→いちば)、風車が回っている (かざぐるま→ふうしゃ)。
+  対になる文 (この店は人気がある、彼は上手に話す、株式市場が開いた) は元の読みのまま。
+- 実装:
+  - third_party.py: tsqyomi の 4 ファイル (model / tokenizer / metadata / LICENSE、リビジョン固定 + sha256) と tokenizers の wheel。
+  - build_addon.py: _aivis/data/tsqyomi/ に同梱。ライセンス条文を third_party.html に掲載 (見出しを「ライセンス条文」に)。
+  - engine.AivisCore.load_tsqyomi(model_dir): pyopenjtalk-plus は SessionOptions を指定せずにセッションを作る
+    (既定では全コア分のスレッドが推論後もスピン待ちし、直後の BERT・デコーダと CPU を取り合う) ので、読み込む間だけ
+    onnxruntime.InferenceSession を差し替えてこのプロジェクトの設定 (スピン待ちなし、4 スレッド) を渡す。失敗しても続行。
+  - frontend.text_to_features: g2p(..., use_tsqyomi=tsqyomi.is_model_loaded())。
+  - paths.find_tsqyomi_dir(): 設定フォルダ\aivis\tsqyomi → 同梱の data\tsqyomi。_aivis は初期化時に読み込み、
+    ログに tsqyomi=True/False を出す。
+- tsqyomi を使うと pyopenjtalk-plus は Sudachi による読み変更を省くので、起動時に sudachidict_core が読み込まれなくなった
+  (tsqyomi が読めないときのために同梱は続ける)。ハーネスの確認を「読み込まれていれば同梱のもの」に変更。
+- 確認 (同梱物のみ、本物の NVDA 標準ライブラリ): tsqyomi=True、tokenizers も同梱から読み込み。全シナリオ音切れほぼ 0
+  (5 倍速で 1ms が 1 回)、連打の中央値 128ms (組み込み前 130ms) と遅延は変わらない。コアの準備 6.3 秒。
+- アドオン: 1609MB → 1742MB (展開後 2024MB → 2180MB)。readme に特長・システム要件・著作権を追記。
+
+--------------------------------------------------
+2026-11-04 CUDA 加速のダイアログを NVDA 標準の部品に (ユーザー報告: インストールダイアログの内容を読み上げない)
+--------------------------------------------------
+- 原因: 進捗ダイアログは VSU の DownloadProgressDialog をまねて wx.Dialog に StaticText・Gauge・ボタンを並べた自作で、
+  フォーカスがキャンセルボタンに行くだけで文言や進捗の変化が読み上げられない。確認ダイアログは NVDA の
+  gui.message.MessageDialog だったが、wxCallOnMain を通さずメニューの処理から直接 ShowModal していた。
+- 修正 (globalPlugins/DASH/__init__.py):
+  - 進捗: NVDA 自身の更新のダウンロード (updateCheck.UpdateDownloader、DASH のアップデーターも同じ) と同じく
+    wx.ProgressDialog を同じ手順で使う (gui.mainFrame.prePopup() → PD_CAN_ABORT | PD_ELAPSED_TIME | PD_REMAINING_TIME |
+    PD_AUTO_HIDE, parent=gui.mainFrame → CentreOnScreen / Raise → Update(割合, 文言) の戻り値でキャンセル判定 →
+    Hide / Destroy → wx.CallLater で postPopup)。手順はユーザーの NVDA の updateCheck.pyc を逆アセンブルして確認。
+  - 確認・メッセージ: VSU の compat.yesno / compat.messageBox (NVDA の MessageDialog を gui.guiHelper.wxCallOnMain で表示)
+    に統一。完了後の再起動の確認もインストールのスレッドから compat.yesno で出し、core.restart は wx.CallAfter で。
+- 実機での読み上げの確認はまだ (GUI はハーネスでは試せない)。
+  → 実機 NVDA で、確認ダイアログと進捗が読み上げられることを確認 (ユーザー報告)。
+
+--------------------------------------------------
+2026-11-04 AivisSpeech の辞書を NVDA メニューからダウンロード (ユーザー依頼。古いアドオンの削除はユーザーが実施)
+--------------------------------------------------
+- 方針 (ユーザー): CUDA 加速と同様に、辞書を GitHub からダウンロードする機能を作る (同梱しない)。
+- dictionaries_manifest.json (scripts/make_dict_manifest.py): AivisSpeech-Engine @ ab707f2 の resources/dictionaries の
+  38 個 (225MB) の raw URL と sha256 (third_party_pins.json の dic-* と同じ)。
+- _aivis/dict_installer.py: cuda_installer の _download (sha256 照合) を使って 1 つずつダウンロード →
+  設定フォルダ\aivis\aivisspeech_dictionaries_pending → activate_pending() で aivisspeech_dictionaries に切り替え。
+  削除は印を置いて activate_pending() で削除。利用者が自分で置く aivis\dictionaries とは別フォルダ。
+  pyopenjtalk は読み込んだ辞書のファイルを開いたままにしないので、使用中でも入れ直し・削除ができる
+  (試験で確認) → 再起動なしで反映する。切り替えられなかった場合だけ次回起動時に反映。
+- paths.find_dictionaries(): AivisSpeech の辞書 (ダウンロードしたもの、無ければビルド時に同梱したもの) のあとに
+  利用者の aivis\dictionaries\*.dic を続ける。_aivis/__init__.py: 起動時に dict_installer.activate_pending()。
+- Runtime.reload_dictionaries(): 印を立て、合成スレッドが次の仕事の前に適用し直す (cancel() は合成キューを空にするので
+  キューには入れない。合成中に辞書を差し替えないため合成スレッドで)。適用は 0.01 秒。
+- NVDA メニュー「DASH」に「AivisSpeech の辞書をインストール(&D)」「AivisSpeech の辞書を削除(&L)」。
+  CUDA 加速と同じく NVDA 標準の部品 (compat.yesno / messageBox、wx.ProgressDialog)。確認ダイアログに出典と
+  ライセンスの扱い (AivisSpeech Engine (LGPL-3.0) のリポジトリに含まれる辞書、各辞書は AivisSpeech Engine に準じる) を書いた。
+  DASH が今のシンセサイザーなら、インストール・削除の直後にその場で適用し直す。
+- 確認:
+  - インストーラ単体 (work/ に実際にダウンロード): 40 秒、38 個とも AivisSpeech-Engine と一致。辞書を読み込んだ状態でも
+    入れ直し・削除ができる。削除の予約も OK。一時ファイルは残らない。
+  - ハーネス (HARNESS_DICT_TEST=1): 辞書なしで起動 → 辞書を置いて reload_dictionaries() → 次の読み上げの前に
+    「dictionaries reloaded (38+0)」、音切れ 0、最初の音 140〜149ms (前と同じ)。
+- readme の「辞書」に「AivisSpeech の辞書」の節、NVDA メニューの項目、バージョン履歴を追記。開発用 README も更新。
+- 実機の NVDA での確認はまだ (メニュー・ダイアログの読み上げ、その場での反映)。
+
+--------------------------------------------------
+2026-11-05 AivisHub の音声合成モデルを NVDA メニューからダウンロード (ユーザー依頼)
+--------------------------------------------------
+- AivisHub API (https://api.aivis-project.com/v1, openapi.json で確認):
+  GET /aivm-models/search (keyword, sort=download|like|recent, page, limit は最大 30)、
+  GET /aivm-models/{uuid}/download?model_type=AIVMX (署名付き URL へリダイレクト)。
+  検索結果の model_files にライセンスの種類・本文、版、大きさ、checksum (= sha256。同梱の「まお」で一致を確認済み) がある。
+- 公開モデル 76 件: すべて Style-Bert-VITS2 (JP-Extra) で DASH で使える。238〜258MB。
+  ライセンス: ACML 1.0 38 / ACML-NC 1.0 7 / Custom (作者独自) 28 / CC0 3
+  → Custom が多いので、ダウンロード前にライセンスの本文を読める画面と同意の確認を入れた。
+- NVDA の基底 SynthDriver は声の一覧をキャッシュするが、DASH は _get_availableVoices を自分で実装していて毎回作り直す
+  → 再起動なしで声を追加できる。
+- 実装:
+  - aivis_core/aivmx.py: ONNX の metadata_props だけを protobuf の形式どおりに読む (onnx / numpy 不要)。
+    engine.read_aivmx_header もこれを使う: 1 モデル 210〜250ms → 2〜37ms、内容は同一。声の一覧づくり・起動も速くなる。
+    aivis_core/__init__.py は engine を必要になったときに読み込む (PEP 562) ようにした (aivmx だけを軽く使うため)。
+  - engine.AivisCore.set_model_paths(): モデルの一覧を設定し直す (消えたモデルは解放)。
+  - _aivis/model_hub.py (NVDA 非依存): search (全ページ)、summarize (表示用。カテゴリー・声の種類・ライセンスの日本語表記)、
+    download (同じフォルダに一時ファイル → sha256 照合 → 置き換え)、downloaded_models、installed_uuids。
+    保存先は 設定フォルダ\aivis\models\<uuid>.aivmx (paths.find_models が探す場所)。
+  - Runtime.refresh_models(): 声の一覧をすぐ作り直し、合成コアへの反映は合成スレッドが次の仕事の前に (辞書と同じく印で)。
+    使っていた声のモデルが消えたら最初の声に切り替える。
+  - NVDA メニュー「DASH」に「音声モデルをダウンロード(&M)」「音声モデルを削除(&X)」。ダウンロードのダイアログは
+    NVDA の設定画面と同じく gui.guiHelper (BoxSizerHelper.addLabeledControl, ButtonHelper) でラベル付きの標準の wx の部品:
+    並び順 (Choice)、キーワード (TextCtrl, Enter で検索) と検索ボタン、モデル (ListBox。インストール済みの印)、
+    詳細とライセンス (読み取り専用の複数行 TextCtrl: 作者・カテゴリー・声・版・大きさ・ダウンロード数・話者とスタイル・
+    説明・ライセンスの種類と本文)、ダウンロード / 閉じる。一覧の取得は別スレッド。ダウンロードはライセンスへの同意を
+    compat.yesno で確認 → wx.ProgressDialog。削除は wx.SingleChoiceDialog で aivis\models のモデルを選ぶ。
+    guiHelper の名前はユーザーの NVDA の library.zip で確認済み。
+- 確認:
+  - model_hub 単体: 76 件を 0.6 秒で取得、キーワード検索、1 件 (237MB) を 23 秒でダウンロード・照合、
+    sha256 不一致の検出 (一時ファイルは残らず、前のファイルはそのまま)。numpy / onnxruntime は読み込まれない。
+  - ハーネス (HARNESS_MODEL_TEST): モデルを置いて refresh_models() (19ms) → 声 6→7 → その声で読み上げ OK
+    (1 回目はモデルの読み込みで 6.2 秒、2 回目 157ms)。削除 → 声 7→6、使っていた声は「まお」に戻って読み上げ OK。
+- readme の「音声合成モデルの追加」「NVDA メニューの項目」「バージョン履歴」を更新。
+- 実機の NVDA での確認はまだ (ダイアログの操作と読み上げ)。
+
+--------------------------------------------------
+2026-11-05 音声モデルのダウンロードに試聴をつける (ユーザー提案: キャラクター一覧でスペースキーで再生)
+--------------------------------------------------
+- AivisHub の検索結果の speakers[].styles[].voice_samples に試聴用の音声 (audio_url, transcript) がある。
+  形式は m4a (AAC) だけ (mp3 / wav / opus / ogg は 404)。公開 76 モデル中 75 モデル、計 189 スタイル分。
+- 再生方法の検討:
+  - MCI (winmm mciSendString): mpegvideo / MPEGVideo2 / 種類の指定なし、いずれも m4a を開けない (エラー 277 / 263)。
+  - Media Foundation の Source Reader で 16 ビット PCM に変換 → NVDA の nvwave.WavePlayer で再生 (採用)。
+    Windows 10/11 に標準で入っていて AAC のデコーダーもある。ctypes だけで vtable を直接呼ぶ (_aivis/mf_decode.py)。
+    15.9 秒の音声 (44.1kHz モノラル) を約 50ms で変換。NVDA の出力デバイス・音量で鳴る。
+- model_hub: summarize に samples (話者, スタイル, URL, 読み上げ文)、fetch_sample (ダウンロード → 変換 → 覚えておく)。
+  1 回目 0.25〜0.33 秒、2 回目からは即時。
+- ダイアログ (globalPlugins/DASH):
+  - 「モデル(&M) (スペースキーで試聴)」: スペースで最初のスタイルを試聴、再生中にもう一度押すと停止、別のモデルに移ると停止。
+  - 「スタイルの試聴(&T)」(新設): 選んだモデルの「話者: スタイル」。スペース / エンター / ダブルクリックで試聴。
+  - 「試聴(&P)」ボタン。ダイアログを閉じる・検索し直す・ダウンロードを始めると停止。試聴用の音声が無いモデルでは
+    ui.message で「試聴用の音声はありません」。
+  - SamplePlayer: 別スレッドで 0.25 秒ずつ nvwave.WavePlayer に流す (止めるとすぐ止まる)。新しい再生は前の再生を止める。
+- readme の「音声合成モデルの追加」に試聴の操作を追記。
+- 実機の NVDA での確認はまだ (キー操作と再生)。
+
+--------------------------------------------------
+2026-11-05 音声モデルのダウンロード完了後に NVDA がクラッシュ (ユーザー報告) → 修正
+--------------------------------------------------
+- ログ (%TEMP%\nvda-old.log): 完了メッセージ「…をダウンロードしました」→ OK → 元のダイアログにフォーカスが戻った直後に
+  CRITICAL「NVDA crashed!」。メインスレッドのスタックは globalPlugins\DASH\__init__.py の ProgressDialog.update
+  (self._dlg.Update(...))。
+- 原因 (DASH の不具合): wx.ProgressDialog.Update() は画面を固まらせないよう中で一時的にイベントを処理する (yield)。
+  ダウンロードのスレッドは「進捗の更新」「close」「完了メッセージ」を続けて wx.CallAfter で予約していたので、
+  最後の Update の途中で close (ダイアログの破棄) と完了メッセージ (モーダル) まで実行された。メッセージを閉じたあと
+  Update に戻ったところで破棄済みのダイアログに触れて落ちた。CUDA 加速・辞書のダウンロードも同じ作りで、
+  タイミング次第で同じように落ちうる (CUDA はたまたま落ちなかった)。
+- 修正 (ProgressDialog):
+  - Update の実行中に来た close は、Update が戻ってから実行する。閉じる予定のとき・入れ子のときの update は無視。
+  - ダウンロードのスレッドからは update_later() / close_and_wait() を使う。close_and_wait() はダイアログが実際に
+    閉じるまで待つので、完了メッセージは必ず閉じた後に出る。声・辞書・CUDA の 3 か所すべて (update 3、close 9) を置き換え。
+- 試験 scripts/test_progress_dialog.py: 偽の wx (Update の中で予約済みの処理を動かす) で、修正前のクラスでは
+  「破棄済みのダイアログに Update から戻る」が再現し、修正後は Update 終了 → 破棄 → 完了メッセージの順になることを確認。
+- 再ビルド。→ 実機 NVDA で、ダウンロード完了後も落ちないことを確認 (ユーザー報告)。
+  → ただしその後また落ちた。ログのスタックは修正前のコードで、NVDA に入っていたのは修正前のビルド (01:09。修正は 01:23)
+    だった (前回の「動いた」は、タイミング次第の不具合がたまたま出なかっただけ)。修正版を入れ直して、
+    音声モデルのダウンロードと削除が動くことを確認 (ユーザー報告)。バージョンは 0.1.0 のまま (ユーザー指示)。
+- 実機 NVDA で、音声モデルの試聴と、AivisSpeech の辞書のインストール・削除が動くことを確認 (ユーザー報告)。
+
+--------------------------------------------------
+2026-11-05 GPU で黙っていた直後の 1 発話目が遅い件の再実験 (今の ORT 1.20.1 + cuDNN 8.9)
+--------------------------------------------------
+- scripts/bench_gpu_idle.py (最初の音 150ms 分ができるまで、中央値)。黙っていた時間 0 / 2 / 5 / 15 秒:
+  CPU のみ 約 105〜115ms (休止の影響なし) / GPU 対策なし 39 / 約 150〜200 / 約 230 / 約 245ms。
+- 効かなかったもの (メモリ増なし): 小さなデコードや BERT を一定間隔で流して GPU を起こし続ける (50ms〜1 秒間隔。
+  改善が不安定で 95〜245ms)、CPU を空回りさせてから始める、デコーダだけ CPU にする (+60MB、かえって悪化)。
+- 効いたもの: 休止後の 1 文目だけ BERT を CPU で計算 (約 110〜125ms) → ただし CPU 用 BERT fp32 で +1.3〜1.5GB。
+  int8 に量子化すると +0.4GB・25〜37ms だが fp32 との特徴量のずれが大きい (cos 平均 0.93〜0.96、最小 0.51)。
+  → メモリを使いすぎるので採用しない (ユーザー判断)。scripts/bench_bert_int8.py。
+- NVIDIA コントロールパネルで nvda.exe の電源管理モードを「パフォーマンス最大化を優先」にした (ユーザー操作)。
+  python.exe を nvda.exe という名前でコピーして比べたが差はなかった (2/5/15 秒: python.exe 192/223/250ms、
+  nvda.exe 156/234/242ms。2 秒の差はばらつきの範囲)。コピーは削除済み。
+  ※ プロファイルが「パス」で一致する場合は名前だけのコピーには効かないので、本物の NVDA では未確認。
+  → 切り分けのためグローバル設定を「パフォーマンス最大化を優先」にして再計測 (ユーザー操作)。
+    0/2/5/15 秒: 38/153/217/247ms で変わらず。計測後の nvidia-smi は P8・210MHz・8.5W で、この設定は
+    CUDA の処理だけのときは GPU の省電力状態を止めない。→ NVIDIA の電源管理モードでは直らない (設定は戻してよい)。
+- 合成結果を覚えておく案 (よく出る短い言葉の音声を使い回す) は採用しない (ユーザー判断)。
+  GPU の休止直後の遅れと、CPU で 3.5 倍速以上の短い項目の間は、既知の制限として残す。
+- 結論: 遅れの正体は休止から戻った GPU の 1 回目の推論 (主に BERT)。メモリを増やさずに直す方法は見つからず、
+  既知の制限として残す。
+
+--------------------------------------------------
+2026-11-05 声の切り替えの待ち時間を短縮 (onnxruntime-directml 1.24.4 → 1.23.0)
+--------------------------------------------------
+- 内訳 (scripts/bench_model_load.py、CPU、モデル 246MB): onnx.load 0.15s / グラフの分割 0.2s / 直列化 0.14s /
+  前段のセッション作成 約 3.0s / デコーダのセッション 0.07s。前段の作成の大半 (2.7s) は onnxruntime の
+  メモリ割り当て計画 (verbose ログで確認。前段は 5,088 ノード)。最適化レベルを変えても、最適化済みのグラフや
+  ORT 形式を保存して読み込んでも速くならない (1.2〜2.4s。scripts/bench_front_opt.py)。
+- 前段のセッション作成の時間を版ごとに比較 (同じグラフ、CPU): 1.20.1 / 1.21.1 / 1.22.1 / 1.23.2 は 1.34〜1.41s、
+  1.24.4 は 3.04〜3.08s。1.24 で遅くなった (DirectML 版でなくても同じ)。
+- 同梱の onnxruntime-directml を 1.23.0 に変更 (third_party_pins.json, third_party.py, requirements-dev.txt。
+  DirectML.dll は同じ 1.15.4 なのでライセンス文書はそのまま)。推論の速さは同じ (BERT 等 47ms / 前段 32ms /
+  デコーダ 35ms)。開発用の tools/py313 も 1.23.0 にそろえた。
+- 模擬 NVDA (scripts/nvda_harness.py に HARNESS_SWITCH=1 を追加: 3 つのモデルの声を順に切り替えて読む):
+  切り替え後の最初の音 1.24.4 で 3.6〜4.2s → 1.23.0 で 2.1〜2.4s。普段の読み上げの試験も変化なし。
+- ついでに見つけた不具合を修正: 古い形式の AIVMX (入力に noise_scale / noise_scale_w が無い。AivisSpeech の
+  フォルダにある ffcb0f8e…) では入力の数が合わず、その声を選ぶと何も読まなかった → 無い入力は渡さない (engine.py)。
+- 見送り: 分割したグラフをディスクに保存して使い回す案 (約 0.5s 短縮だがモデル 1 つにつき約 240MB 増える)。
+- CUDA 加速の人は CUDA パックの 1.20.1 を使うので、この変更の影響はない (モデルの読み込みは約 3.3s のまま。
+  内訳は前段 1.3s、CUDA のデコーダの準備 1.1s、最初のデコード 0.45s)。
+
+--------------------------------------------------
+2026-11-06 CUDA での声の切り替えの待ち時間を調べ直し
+--------------------------------------------------
+- 「CUDA は約 3.5 秒」は、毎回新しいプロセスで測った値だった。デコーダの準備の約 1.1 秒と最初のデコードの
+  約 0.45 秒は cuDNN の初期化で、NVDA の起動後の最初の 1 回だけ (2 回目以降のデコーダの準備は 0.2〜0.3 秒)。
+  scripts/bench_parallel_load.py。
+- 模擬 NVDA (HARNESS_GPU=1 HARNESS_SWITCH=1) で、CUDA での切り替え後の最初の音は 2.3〜3.1 秒 (CPU は 2.1〜2.4 秒)。
+  模擬 NVDA の設定フォルダ work/nvda_config/aivis/cuda に、開発用の CUDA パック tools/ort_cuda11 へのジャンクションを置いた。
+- 前段 (CPU) とデコーダ (GPU) の準備を同時に行う案: 2 回目以降は差がない (前段の約 1.3 秒が残る)。
+  縮むのは CUDA で約 0.3 秒程度なので、今は入れない。
+- readme の待ち時間の記述を「2〜3 秒ほど」に直した。
+
+--------------------------------------------------
+2026-11-06 片付け (残課題 12)
+--------------------------------------------------
+- dist/ はすでに無かった。
+- scripts/ の計測・検証用スクリプトを 1 つずつ 60 秒起動して点検。モデルのパスや NVDA_DIR を渡す必要があるだけの
+  もの (find_dec, inspect_graph, split_test, check_pitch) は正常。
+- 削除: bench_cuda_dec.py (CUDA 12 版の onnxruntime にしか無い preload_dlls を使う。bench_model_load.py /
+  bench_parallel_load.py で代わりになる)、trace_cuda_short.py (今は無い内部の仕組みを前提にしていた。GPU の休止の
+  調査は bench_gpu_idle.py で行う)。
+- 修正: bench_cuda_shapes.py の既定の CUDA パックの場所を tools/ort_cuda11 に (以前は build/aivisCudaPack)。
+  engine.py と bench_cuda.py のコメントで削除したスクリプトや古いフォルダを指していたところを直した。
+- build_cuda_pack.py (別アドオン aivisCudaPack 形式のオフライン配布用) は tools/ort_cuda11 から作れるので残す。
+
+--------------------------------------------------
+2026-11-06 画面の文言の翻訳 (残課題 10)
+--------------------------------------------------
+- NVDA のアドオンの標準どおり、ソースの文言を英語にし (_("...")、133 項目)、日本語を
+  addon/locale/ja/LC_MESSAGES/nvda.po に移した。NVDA が日本語なら今までどおり日本語、それ以外の言語では英語。
+- アップデーターの文言は VSU の元の英語に戻した (VSU の updaterStrings.py と msgid が完全に一致することを確認。
+  訳も VSU と同じ)。
+- 今まで翻訳の仕組みの外にあった文言も対象にした: 読み込みエラー (BERT・モデルが無い)、CUDA のダウンロードの
+  検証エラー、AivisHub のラベル (並び順・ライセンス・カテゴリー・声の種類。model_hub は NVDA に依存しないので
+  N_() で目印だけ付け、画面に出すときに _() で訳す)、話者のスタイルの区切り (", " → 「、」)。
+- scripts/i18n.py: update (ソースから集めて各言語の .po を同期)、check (訳漏れ・差し込み {name} などの不一致で失敗)、
+  ビルド用の .po → .mo の変換 (開発環境に GNU gettext が無いので自前。標準の gettext で 133 項目すべて一致を確認)。
+- scripts/build_addon.py: .mo と、訳したアドオンの説明 locale/ja/manifest.ini を作る (配布物に .po は入れない)。
+  buildVars.py の説明は英語にした。
+- 確認: ビルドしたアドオンを NVDA と同じ gettext.translation("nvda", localedir=<アドオン>/locale) で読み、日本語は
+  日本語、訳の無い言語は英語になること。manifest は NVDA の configobj で読めること。模擬 NVDA の試験も変化なし。
+- README.md に「翻訳」の節を追加。利用者向けの説明書は日本語 (doc/ja/readme.md) だけのまま。
+
+--------------------------------------------------
+2026-11-07 英語版の説明書
+--------------------------------------------------
+- addon/doc/en/readme.md を追加 (日本語版 doc/ja/readme.md と同じ内容。メニュー・ボタン名は英語の画面の文言に
+  そろえた。DASH が日本語を読む音声エンジンであることを冒頭に明記)。
+- build_addon.py で doc/en/readme.html も作る (<html lang="en">)。同梱物の一覧 third_party.html は日本語版だけなので、
+  英語版からは ../ja/third_party.html にリンク。
+- NVDA の addonHandler.getDocFilePath (本物の library.zip で確認) は doc/<言語> → 地域なしの言語 → doc/en の順に
+  探すので、日本語以外の NVDA では英語版が開く。
+- 日本語版のバージョン履歴に「画面の表示と説明書を英語と日本語に対応」を追加。README.md の翻訳の節も更新。
+
+--------------------------------------------------
+2026-11-07 fp16 版 BERT の想定を削除 / 説明書に AivisSpeech の概要
+--------------------------------------------------
+- ユーザー指摘: fp32 版を同梱しているので、それを消さない限り「fp16 版だけがある」状況は起こらない → 想定ごと削除。
+  - bert_models.init は model.onnx (fp32) だけを読む (fp16_model_to_fp32 と prefer_fp32 を削除)。
+  - paths.find_bert_dir は ユーザー設定フォルダ\aivis\bert (fp32 で差し替えたいとき) → 同梱 だけ。AivisSpeech の
+    BertModelCaches を探す処理も削除 (同梱が先に見つかるので使われず、しかも今の AivisSpeech の BERT は fp16 版)。
+  - BERT が見つからないときのメッセージを「DASH を入れ直してください」に (「AivisSpeech を一度起動するか」は成り立たない)。
+  - 説明書 (ja/en) のメモリの節から fp16 版の段落を削除。
+  - 計測用スクリプトは同梱の BERT (build/addon/.../data/bert) を使うように変更 (AivisSpeech の fp16 版を見ていたため)。
+    bench_bert_load.py (fp16 の変換時間の計測) は削除。bench_bert.py (fp16/fp32/int8 の比較) だけは AivisSpeech の fp16 版。
+    verify_frontend.py は本家側が fp16 版 (本家の読み込み処理は model_fp16.onnx しか読まない)、DASH 側が同梱の fp32 版で
+    比較し FRONTEND OK (音素一致、BERT 特徴量の相対誤差 約 0.1%)。ほかの BERT を使うスクリプトも起動を確認。
+- 説明書 (ja/en) の概要に「AivisSpeech について」(概要と公式サイト・AivisHub のリンク) を追加。
+  初版のバージョン履歴は「初期バージョン」だけに (日本語版はユーザーが修正、英語版を合わせた)。
+- 再ビルド。模擬 NVDA (通常、および APPDATA を空にした同梱物だけの環境) で動作を確認。
+
+--------------------------------------------------
+2026-11-07 CI に DASH 独自の点検を追加 (残課題 9)
+--------------------------------------------------
+- ユーザー: .github の既存ファイルと別ファイルなら問題ない → .github/workflows/checks.yml を追加
+  (既存の 4 つのワークフローは変更なし)。master への push とプルリクエストで、Ubuntu + Python 3.13 で次を実行:
+  - 全 .py の構文 (compileall: addon, aivis_core, scripts, buildVars.py)
+  - 翻訳の点検 scripts/i18n.py check
+  - 進捗ダイアログの再入の試験 scripts/test_progress_dialog.py
+- test_progress_dialog.py: パスの決め打ちをやめ (リポジトリからの相対)、失敗時に終了コード 1 を返すように。
+  偽の wx が修正前のクラスでクラッシュを再現できなかったときも失敗にする (試験自体が意味を失うため)。
+- 手元で 3 つとも成功、わざと壊した .po では i18n check が失敗することを確認。実際の GitHub Actions では初回 push で確認。
+
+未確認・今後の課題 (2026-11-07 更新)
+  公開前に必要なこと
+  - 初回コミットと push (ユーザーが後で行う)。push で snapshot ワークフローが動くので、実際の GitHub Actions での
+    初回ビルド (約 1.7GB のダウンロード、DASH-latestcommit のリリース、actlab.org への登録) を確認する。
+    組織のシークレット (SCRIPT_PASSWORD, SLACK_ALERT_WEBHOOK_URL) が DASH から使えるかもここで分かる。
+  - アップデートサーバーへの DASH の登録 (今は name=DASH で 404 "Requested name is not registed.")。
+    登録後に NVDA メニューの「アップデートを確認」を実機で確認する。
+  - 実機 NVDA での確認 (残り):
+    - AivisSpeech が入っていない PC で、同梱物 (BERT fp32・「まお」・tsqyomi) だけで動くか (模擬環境でしか確認していない)
+    - CUDA の DLL が読めないときに CPU で動き続けること (まれな場合。模擬環境でしか確認していない)
+    - onnxruntime-directml 1.23.0 にした版での声の切り替え (模擬環境では 2.1〜2.4 秒) と、古い形式のモデルの声
+      (ffcb0f8e…) で読み上げること
+  (確認済み: DASH への改名後の動作、NVDA メニューの音声モデルのダウンロード・試聴・削除、AivisSpeech の辞書の
+   インストール・削除、CUDA 加速のインストールとダイアログの読み上げ)
+
+  わかっている制限・改善の余地
+  - 声を切り替えた直後の 1 回目は、モデルの読み込みで最初の音まで約 2.1〜2.4 秒 (CPU) / 約 2.3〜3.1 秒 (CUDA) かかる
+    (読み込むモデルは常に 1 つ。2026-11-05 に CPU は 3.6〜4.2 秒から短縮)。残りの大半は前段のセッション作成
+    (約 1.3 秒、onnxruntime のメモリ割り当て計画) で、メモリやディスクを増やさずに縮める方法は見つかっていない。
+  - GPU (CUDA) で、数秒以上何も読まなかった直後の 1 発話目は最初の音まで約 250ms (CPU は約 110ms)。
+    GPU の省電力状態が原因で、メモリを増やさない対策・NVIDIA の電源管理モードとも効果なし (2026-11-05 の再実験)。
+  - CPU で 3.5 倍速以上のとき、ごく短い項目が続くと項目の間に 10〜90ms の間が空く
+    (合成結果を覚えておく案は採用しない)。
+  - CUDA 加速は CUDA 11.8 のため RTX 50 シリーズ非対応 (cuDNN 9 ではこのモデルが遅くなる)。
+  - メモリ: BERT fp32 で約 1.4GB + モデル 1 つ + tsqyomi 約 0.3GB (合計約 2.3GB)。
+
+  保守・品質
+  - CI の点検は構文・翻訳・進捗ダイアログの試験だけ (checks.yml)。合成の試験 (scripts/nvda_harness.py) は本物の NVDA と
+    モデルが必要なので手元でしか動かない。
+  - 同梱物の一覧 (third_party.html) は日本語のみ (英語版の説明書からは日本語版へリンク)。
+  - 翻訳の実機確認: 日本語の NVDA で文言が今までどおり日本語で出ること、英語の NVDA で英語で出ること。
+  - VSU と共通の tools/build.py の `from audioop import add` のため、CI の Python を 3.13 にできない (3.12 を使用)。
+    共通スクリプト側で直れば 3.13 にできる。

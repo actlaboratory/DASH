@@ -1,0 +1,235 @@
+{
+ "version": "AivisSpeech-Engine@ab707f2",
+ "source": "https://github.com/Aivis-Project/AivisSpeech-Engine/tree/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries",
+ "files": [
+  {
+   "name": "1-01_default.dic",
+   "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/1-01_default.dic",
+   "sha256": "5df606ab158cdeacf0c85795fcb573cf85895b4e08b40ce1c27ecac4f4e00924",
+   "size": 123091
+  },
+  {
+   "name": "1-02_naist-jdic-katakana.dic",
+   "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/1-02_naist-jdic-katakana.dic",
+   "sha256": "76ad712a5704d4337037d8335fe787e6d037dc1339efb94a9d023e8147c8c159",
+   "size": 12424729
+  },
+  {
+   "name": "1-03_unidic.dic",
+   "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/1-03_unidic.dic",
+   "sha256": "80040b46eb8fc943a833a283ce642d3cca82df44902829f433dac43ca222c464",
+   "size": 1002460
+  },
+  {
+   "name": "1-04_jp-accent-dic.dic",
+   "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/1-04_jp-accent-dic.dic",
+   "sha256": "6d42ad0b53151c21a14b87647ab8f0775cc05899a5e22fb33d788dbde4df9c18",
+   "size": 2187951
+  },
+  {
+   "name": "1-05_yomitan-dic-accent.dic",
+   "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/1-05_yomitan-dic-accent.dic",
+   "sha256": "cd0e85f374dc0a7b203faa57baffcb03b3b6badf648e8aa7b8285e9906971063",
+   "size": 7948339
+  },
+  {
+   "name": "1-06_wiktionary-accent.dic",
+   "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/1-06_wiktionary-accent.dic",
+   "sha256": "7ddb22004f06212b48559b28aa28dcfef2096ffe8f8bf11d377a5e1bd7f8c9a0",
+   "size": 265081
+  },
+  {
+   "name": "1-07_expressway-abbreviations.dic",
+   "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/1-07_expressway-abbreviations.dic",
+   "sha256": "866ee640ef275f8b867d6542bd2106958003b3040e322ff889f1a44ebd5fa952",
+   "size": 32811
+  },
+  {
+   "name": "1-08_place-accent-overrides.dic",
+   "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/1-08_place-accent-overrides.dic",
+   "sha256": "76365b0a464f793a840c8fcb8ee4b6bdafb8e2eb1c4323263edd9d2b6c52f7fd",
+   "size": 36346
+  },
+  {
+   "name": "2-01_sudachidict-small.dic",
+   "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/2-01_sudachidict-small.dic",
+   "sha256": "73b730293c4fa6fc5afbfb7de353e94dff6c5d9b77ba12346260a615b79e7e8a",
+   "size": 118958
+  },
+  {
+   "name": "2-02_sudachidict-core.dic",
+   "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/2-02_sudachidict-core.dic",
+   "sha256": "01e1ec5cd1edbd22b5646209e99d4cfbae104d5fa87dabc4b8190cc41367a481",
+   "size": 47905000
+  },
+  {
+   "name": "2-03_yojijukugo.dic",
+   "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/2-03_yojijukugo.dic",
+   "sha256": "c281c3a7eb11fbf2c716e175b5719c441b4d78e1162586098e12f3f466069640",
+   "size": 892109
+  },
+  {
+   "name": "2-04_name-a10-sei.dic",
+   "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/2-04_name-a10-sei.dic",
+   "sha256": "0d1a4387c7a1f43573c862ea070afa945cb1bc8786007d1c08b3dabd227ede04",
+   "size": 11095
+  },
+  {
+   "name": "2-05_name-a10-mei.dic",
+   "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/2-05_name-a10-mei.dic",
+   "sha256": "b798ebb7c59c259d5c1dba03ab186c700aa2a2f1a5383957920dba2cac40a20d",
+   "size": 30024
+  },
+  {
+   "name": "2-06_name-matsutake.dic",
+   "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/2-06_name-matsutake.dic",
+   "sha256": "4ab738ebc26c8ef9c49876c62a22c49db1760a6e2ae4d01c963c79e1db01f413",
+   "size": 2431345
+  },
+  {
+   "name": "2-07_mzime-name.dic",
+   "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/2-07_mzime-name.dic",
+   "sha256": "31666cf7679f7e0dd560b126dabba48a56364195e282178f620bcc8f38f4cc18",
+   "size": 4897
+  },
+  {
+   "name": "2-08_personal-name.dic",
+   "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/2-08_personal-name.dic",
+   "sha256": "de45ddf919ddc878705107118bfbefe718479dd5316e01b04330536c727e356d",
+   "size": 5680415
+  },
+  {
+   "name": "2-09_place-names.dic",
+   "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/2-09_place-names.dic",
+   "sha256": "ab1440d1e0a0c0fa3d49ce0099ed1fca3de3c89d65840617dc920c87a759d8b8",
+   "size": 927631
+  },
+  {
+   "name": "2-10_skk-jisyo-station.dic",
+   "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/2-10_skk-jisyo-station.dic",
+   "sha256": "630368f5d7f30f529e495c80118c0f2489e9ed8823c313511cdbe54704eee16b",
+   "size": 465096
+  },
+  {
+   "name": "2-11_skk-jisyo-jinmei.dic",
+   "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/2-11_skk-jisyo-jinmei.dic",
+   "sha256": "f1796466116c1e6f9c6bfe6a7cdd7bc017e7a3862753c4c02c716658ecc73560",
+   "size": 498924
+  },
+  {
+   "name": "2-12_skk-jisyo-law.dic",
+   "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/2-12_skk-jisyo-law.dic",
+   "sha256": "f770f011472a1bb4f029457998bbcd3b2d04434f551822b0751db5fcd14473fa",
+   "size": 312229
+  },
+  {
+   "name": "2-13_skk-jisyo-propernoun.dic",
+   "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/2-13_skk-jisyo-propernoun.dic",
+   "sha256": "087a9a95b3288b9a34212bd35cd4cdedc3ee75dd1a24d0e628f8ac0bdc930e44",
+   "size": 624362
+  },
+  {
+   "name": "2-14_skk-jisyo.dic",
+   "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/2-14_skk-jisyo.dic",
+   "sha256": "6943b35bf648a44e1d093f9a7075fd839644052b1ac85d5cab0b2b1525a16601",
+   "size": 1491576
+  },
+  {
+   "name": "2-15_o-dic.dic",
+   "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/2-15_o-dic.dic",
+   "sha256": "22f81a7e6341c3d0b21a23c1139174045711aef836040c7625cdca78b2d581c4",
+   "size": 280587
+  },
+  {
+   "name": "2-16_genshin.dic",
+   "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/2-16_genshin.dic",
+   "sha256": "4ba200597832da6ef824680353be2cd74d3267f1d6304e9a4204c46eba1caf05",
+   "size": 118299
+  },
+  {
+   "name": "2-51_bangumi.dic",
+   "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/2-51_bangumi.dic",
+   "sha256": "27405ab86302dc51026210329fbdf295f44c90ab4d1632aa94db5eb77d3fa373",
+   "size": 26413755
+  },
+  {
+   "name": "2-52_wiktionary.dic",
+   "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/2-52_wiktionary.dic",
+   "sha256": "6bc70341ce93b103694339ffc1d0372bea509f360bbaafab5ef71b725acbbb7a",
+   "size": 15417
+  },
+  {
+   "name": "2-53_yomitan-dic.dic",
+   "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/2-53_yomitan-dic.dic",
+   "sha256": "b08171fd68fc51df996598bb8bb15939f50f24e363b7ee0927c7f9b23d775e41",
+   "size": 7409963
+  },
+  {
+   "name": "2-61_katakana-map.dic",
+   "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/2-61_katakana-map.dic",
+   "sha256": "1fd1c976dc8c8e673e6b63fa5f39708905ac06f37ea2606d4387c9d9d6581996",
+   "size": 17847411
+  },
+  {
+   "name": "3-01_sudachidict-notcore-01.dic",
+   "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/3-01_sudachidict-notcore-01.dic",
+   "sha256": "4ce1e41ebc56117af5d78967d7a46a68cab592ce1fed551b6b74f9eaca71d573",
+   "size": 4349385
+  },
+  {
+   "name": "3-01_sudachidict-notcore-02.dic",
+   "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/3-01_sudachidict-notcore-02.dic",
+   "sha256": "712b46b18877bfe980c1975220ecffa5269697042d9f37f76df46c5e7968c6c8",
+   "size": 7814503
+  },
+  {
+   "name": "3-01_sudachidict-notcore-03.dic",
+   "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/3-01_sudachidict-notcore-03.dic",
+   "sha256": "86a69f51b04dd1454dfe801de7db7072f6ca1c559c6e3be6f657420ba50da81c",
+   "size": 22152336
+  },
+  {
+   "name": "3-02_jawiki-kana-kanji-01.dic",
+   "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/3-02_jawiki-kana-kanji-01.dic",
+   "sha256": "33e0387d5edc51a5c7574c333c831b58cb603e5497d26babb01baf85e45f1dce",
+   "size": 11891373
+  },
+  {
+   "name": "3-02_jawiki-kana-kanji-02.dic",
+   "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/3-02_jawiki-kana-kanji-02.dic",
+   "sha256": "6bc9da29a0b6768407b0adc87cd20af996349ec41615858cc0418d3fceb63922",
+   "size": 15203375
+  },
+  {
+   "name": "3-02_jawiki-kana-kanji-03.dic",
+   "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/3-02_jawiki-kana-kanji-03.dic",
+   "sha256": "ffd5e3f0943ff70a88fef4cde38985a43a56792e6d383f17657e8b98e75beaba",
+   "size": 15955044
+  },
+  {
+   "name": "3-03_pixiv-dic.dic",
+   "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/3-03_pixiv-dic.dic",
+   "sha256": "f47fabf8354032a1dd04bb711ce1c9d6727c5c0e2cdc590ae557fda274861e23",
+   "size": 16646443
+  },
+  {
+   "name": "3-04_medic-dmime.dic",
+   "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/3-04_medic-dmime.dic",
+   "sha256": "dfc4c8f5f2fbed60745fff5228abac512dd799963f5eabdcf24431483d92209d",
+   "size": 2914707
+  },
+  {
+   "name": "3-05_medic-orca.dic",
+   "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/3-05_medic-orca.dic",
+   "sha256": "d7c31a6229f23fa4de1a11c36cdd6cb2a9be7d3b325292c6b9d1ad01009169e1",
+   "size": 966690
+  },
+  {
+   "name": "3-06_msmed12.dic",
+   "url": "https://raw.githubusercontent.com/Aivis-Project/AivisSpeech-Engine/ab707f2c32e7d252bce2b4027aa7a49dd6862f1e/resources/dictionaries/3-06_msmed12.dic",
+   "sha256": "c4432910f1655df9be1615898a49b2b67e878cc4eb107796e870d3b94dc7d117",
+   "size": 891226
+  }
+ ],
+ "download_bytes": 236284983
+}

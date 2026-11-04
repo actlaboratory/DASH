@@ -1,0 +1,266 @@
+{
+ "version": "cuda11.8-cudnn8.9.5-ort1.20.1",
+ "sources": [
+  {
+   "name": "onnxruntime-gpu 1.20.1 (CUDA 11)",
+   "url": "https://aiinfra.pkgs.visualstudio.com/2692857e-05ef-43b4-ba9c-ccf1c22c437c/_packaging/9c975526-0258-4aac-9e34-f8b3551decdd/pypi/download/onnxruntime-gpu/1.20.1/onnxruntime_gpu-1.20.1-cp313-cp313-win_amd64.whl",
+   "sha256": "748edbec9499411d7b1c507ca190ab37142eca2eaa2faf5916ebf84f96b9712c",
+   "size": 179692521,
+   "files": [
+    {
+     "member": "onnxruntime/LICENSE",
+     "dest": "onnxruntime/LICENSE",
+     "size": 1094,
+     "compressed": 637,
+     "sha256": "c250d6278f0b47a6439fb7592b08b58a55eb9f535aa49a1db63211c3f982b674"
+    },
+    {
+     "member": "onnxruntime/Privacy.md",
+     "dest": "onnxruntime/Privacy.md",
+     "size": 2490,
+     "compressed": 1174,
+     "sha256": "bfb7712b075f3f07e3ebee5dc2a296d1de32dbf71ad28663f73d1538cb6c3b08"
+    },
+    {
+     "member": "onnxruntime/ThirdPartyNotices.txt",
+     "dest": "onnxruntime/ThirdPartyNotices.txt",
+     "size": 345046,
+     "compressed": 34702,
+     "sha256": "fac5bb85f568b38fd8f3a6aea32737985841f23a1a43e9ce952f79474f883aa9"
+    },
+    {
+     "member": "onnxruntime/__init__.py",
+     "dest": "onnxruntime/__init__.py",
+     "size": 4532,
+     "compressed": 1103,
+     "sha256": "c2f409a257e485d113643862779e9f69831d0b6638213193d59164e307419991"
+    },
+    {
+     "member": "onnxruntime/backend/__init__.py",
+     "dest": "onnxruntime/backend/__init__.py",
+     "size": 334,
+     "compressed": 158,
+     "sha256": "e48d5896c6b07fdc3a30d98ae1188dd7003e10442a94a2b061335907e9bf93a3"
+    },
+    {
+     "member": "onnxruntime/backend/backend.py",
+     "dest": "onnxruntime/backend/backend.py",
+     "size": 8121,
+     "compressed": 2476,
+     "sha256": "48a170662f1c42c47c1e0083a577aa304448aeab604c75f15eb7596c8bb0a6cd"
+    },
+    {
+     "member": "onnxruntime/backend/backend_rep.py",
+     "dest": "onnxruntime/backend/backend_rep.py",
+     "size": 1821,
+     "compressed": 669,
+     "sha256": "f0789df252cf99c06d5ec1147e95ec6a65f4a4de57013208ba7f94ec0ea83669"
+    },
+    {
+     "member": "onnxruntime/capi/__init__.py",
+     "dest": "onnxruntime/capi/__init__.py",
+     "size": 251,
+     "compressed": 96,
+     "sha256": "b91a78a4cb5fa1ac81859804b2216a1420f5dd8e8b528f3615d66c417f17f0b2"
+    },
+    {
+     "member": "onnxruntime/capi/_ld_preload.py",
+     "dest": "onnxruntime/capi/_ld_preload.py",
+     "size": 413,
+     "compressed": 199,
+     "sha256": "962e9c6d9eb88437d49dd6ade26a6b516ce8c0b6b7450770d2ad84e7ab171701"
+    },
+    {
+     "member": "onnxruntime/capi/_pybind_state.py",
+     "dest": "onnxruntime/capi/_pybind_state.py",
+     "size": 1533,
+     "compressed": 707,
+     "sha256": "9db5299d49dcc01bf9a60240f32ba00d82510384d37c2d206983840f98c3f920"
+    },
+    {
+     "member": "onnxruntime/capi/convert_npz_to_onnx_adapter.py",
+     "dest": "onnxruntime/capi/convert_npz_to_onnx_adapter.py",
+     "size": 1581,
+     "compressed": 594,
+     "sha256": "3744a162bdf4bc141c3abf4ac8577801474472a596f3d29577cd2a4980a0750e"
+    },
+    {
+     "member": "onnxruntime/capi/onnxruntime.dll",
+     "dest": "onnxruntime/capi/onnxruntime.dll",
+     "size": 12791840,
+     "compressed": 4704456,
+     "sha256": "c6f7baef4edd98b5039c1dbea45d5fe7921fb26d28b9d4c29eb488ae7a2d9f63"
+    },
+    {
+     "member": "onnxruntime/capi/onnxruntime_collect_build_info.py",
+     "dest": "onnxruntime/capi/onnxruntime_collect_build_info.py",
+     "size": 2109,
+     "compressed": 771,
+     "sha256": "b03f19d92d794074afb8ed63eed82a24a78e44351ab70cd49b3bc2f148fd7003"
+    },
+    {
+     "member": "onnxruntime/capi/onnxruntime_inference_collection.py",
+     "dest": "onnxruntime/capi/onnxruntime_inference_collection.py",
+     "size": 45771,
+     "compressed": 9363,
+     "sha256": "95e32f0eea416670fbf8d514075a8559296388c5656e7ed4ab8d18c383ac2234"
+    },
+    {
+     "member": "onnxruntime/capi/onnxruntime_providers_cuda.dll",
+     "dest": "onnxruntime/capi/onnxruntime_providers_cuda.dll",
+     "size": 484494368,
+     "compressed": 168139858,
+     "sha256": "59859b66748f8c17fef56be31894058d1b0171750e1a23440423afeef3f3feec"
+    },
+    {
+     "member": "onnxruntime/capi/onnxruntime_providers_shared.dll",
+     "dest": "onnxruntime/capi/onnxruntime_providers_shared.dll",
+     "size": 21536,
+     "compressed": 12172,
+     "sha256": "24bb9e66c7d63f6b66117e0828d9597e8ff2ece3fa8c00b640b4efab8b1c2139"
+    },
+    {
+     "member": "onnxruntime/capi/onnxruntime_pybind11_state.pyd",
+     "dest": "onnxruntime/capi/onnxruntime_pybind11_state.pyd",
+     "size": 16499744,
+     "compressed": 5700355,
+     "sha256": "faf89b789b06a0581641fd91fc3e6f4237503ed60fe5213d95216dafe9c51cc1"
+    },
+    {
+     "member": "onnxruntime/capi/onnxruntime_validation.py",
+     "dest": "onnxruntime/capi/onnxruntime_validation.py",
+     "size": 6605,
+     "compressed": 1853,
+     "sha256": "07d8c4d0be23907e545902cc28d1da100f5e8f8f88bfa9740ca863502c624ed7"
+    },
+    {
+     "member": "onnxruntime/capi/version_info.py",
+     "dest": "onnxruntime/capi/version_info.py",
+     "size": 80,
+     "compressed": 62,
+     "sha256": "fa42deebe9f419f51dac35c112def31a038feacea8518b835f68eea4d2df79b8"
+    },
+    {
+     "member": "onnxruntime/datasets/__init__.py",
+     "dest": "onnxruntime/datasets/__init__.py",
+     "size": 471,
+     "compressed": 283,
+     "sha256": "d03d6b7615caf78d0971c52add28f804132a8c3a403ce731946730251e17df07"
+    },
+    {
+     "member": "onnxruntime/datasets/logreg_iris.onnx",
+     "dest": "onnxruntime/datasets/logreg_iris.onnx",
+     "size": 670,
+     "compressed": 462,
+     "sha256": "8224784c98d73412d9fd99abcd57a38568bd590980d0fbe5916464531c52e8fc"
+    },
+    {
+     "member": "onnxruntime/datasets/mul_1.onnx",
+     "dest": "onnxruntime/datasets/mul_1.onnx",
+     "size": 130,
+     "compressed": 107,
+     "sha256": "71f431c4e9321ec6fbeb158d02ed240459a7dcc98673fa79a4f439ce42efaf10"
+    },
+    {
+     "member": "onnxruntime/datasets/sigmoid.onnx",
+     "dest": "onnxruntime/datasets/sigmoid.onnx",
+     "size": 103,
+     "compressed": 74,
+     "sha256": "5340aba67a7e3475162ad794378af55f1718f55f9a5d74b4af60ecc7f7a624b6"
+    }
+   ]
+  },
+  {
+   "name": "CUDA Runtime 11.8",
+   "url": "https://files.pythonhosted.org/packages/48/ae/09f335dfbca630ae213e53d2a9294540620453fe2b37e7489ff05817a525/nvidia_cuda_runtime_cu11-11.8.89-py3-none-win_amd64.whl",
+   "sha256": "f60c9fdaed8065b38de8097867240efc5556a8a710007146daeb9082334a6e63",
+   "size": 1021163,
+   "files": [
+    {
+     "member": "nvidia/cuda_runtime/bin/cudart64_110.dll",
+     "dest": "nvidia/cuda_runtime/bin/cudart64_110.dll",
+     "size": 526848,
+     "compressed": 166347,
+     "sha256": "ba5c2fb526c4ee4bb218ceb3fa5e8bfde89ce474f38711fdcce802549bf9fc6f"
+    }
+   ]
+  },
+  {
+   "name": "cuBLAS 11",
+   "url": "https://files.pythonhosted.org/packages/0b/1d/7a78cd36fd5e3da4021b3ac2c2c8b2651dd72345b7c3ecc0d3e051884f50/nvidia_cublas_cu11-11.11.3.6-py3-none-win_amd64.whl",
+   "sha256": "6ab12b1302bef8ac1ff4414edd1c059e57f4833abef9151683fb8f4de25900be",
+   "size": 427234740,
+   "files": [
+    {
+     "member": "nvidia/cublas/bin/cublas64_11.dll",
+     "dest": "nvidia/cublas/bin/cublas64_11.dll",
+     "size": 88668160,
+     "compressed": 61998086,
+     "sha256": "8ca516b96b29c2fba2344909a896bc1cd7951f6cd11fe595a8a3929c02cccbed"
+    },
+    {
+     "member": "nvidia/cublas/bin/cublasLt64_11.dll",
+     "dest": "nvidia/cublas/bin/cublasLt64_11.dll",
+     "size": 544070144,
+     "compressed": 365049713,
+     "sha256": "3d06ca4e4893adb7a153ecd23a540e92817c967312b44646d8c3f91b089196e6"
+    }
+   ]
+  },
+  {
+   "name": "cuFFT 10",
+   "url": "https://files.pythonhosted.org/packages/f8/b4/e432a74f8db0e84f734dc14d36c0e529225132bf7e239da21f55893351a6/nvidia_cufft_cu11-10.9.0.58-py3-none-win_amd64.whl",
+   "sha256": "c4d316f17c745ec9c728e30409612eaf77a8404c3733cdf6c9c1569634d1ca03",
+   "size": 172237004,
+   "files": [
+    {
+     "member": "nvidia/cufft/bin/cufft64_10.dll",
+     "dest": "nvidia/cufft/bin/cufft64_10.dll",
+     "size": 279878656,
+     "compressed": 172086448,
+     "sha256": "b23e067f0aba79e2dda64a45ed3e8fb591880211e7bfd4bc53b681d27e386093"
+    }
+   ]
+  },
+  {
+   "name": "cuDNN 8.9.5",
+   "url": "https://files.pythonhosted.org/packages/b3/f5/97140674634a5a4f44387677bb8e5b75f72ea81ca108875f1a81854b3367/nvidia_cudnn_cu11-8.9.5.29-py3-none-win_amd64.whl",
+   "sha256": "ba6358cafcbf9ab66887099f5c821dde3968d7b4580cb87c56b548947917b54d",
+   "size": 711820539,
+   "files": [
+    {
+     "member": "nvidia/cudnn/bin/cudnn64_8.dll",
+     "dest": "nvidia/cudnn/bin/cudnn64_8.dll",
+     "size": 288296,
+     "compressed": 127773,
+     "sha256": "4a58d4794ad41eafc7a8dc7214e20f948d0742d7267b368cd7a43563bf8abfcd"
+    },
+    {
+     "member": "nvidia/cudnn/bin/cudnn_cnn_infer64_8.dll",
+     "dest": "nvidia/cudnn/bin/cudnn_cnn_infer64_8.dll",
+     "size": 571158056,
+     "compressed": 343752134,
+     "sha256": "439a3f63a7e784b87d0996a1215f056f0db9e7e33c126b17556e90b93c089605"
+    },
+    {
+     "member": "nvidia/cudnn/bin/cudnn_ops_infer64_8.dll",
+     "dest": "nvidia/cudnn/bin/cudnn_ops_infer64_8.dll",
+     "size": 89814056,
+     "compressed": 60862526,
+     "sha256": "1fe3cd93dca8bfa8a2cb960df959791f09bf0b51dc2bc00d7b2a2dcc94120219"
+    }
+   ]
+  }
+ ],
+ "zlib": {
+  "name": "zlibwapi (zlib 1.2.3)",
+  "url": "http://www.winimage.com/zLibDll/zlib123dllx64.zip",
+  "sha256": "fd324c6923aa4f45a60413665e0b68bb34a7779d0861849e02d2711ff8efb9a4",
+  "member": "dll_x64/zlibwapi.dll",
+  "dest": "nvidia/cudnn/bin/zlibwapi.dll",
+  "file_sha256": "1f047faec08d9a35c304fb4a7cf13853589359a8f7cbfdd48c5d5807712dcf05",
+  "file_size": 89088
+ },
+ "download_bytes": 1182800871,
+ "install_bytes": 2088723947
+}

@@ -1,0 +1,35 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 yamahubuki, ACT Laboratory
+#
+# DASH のビルド (VSU と同じく `scons` で output/<ADDON_NAME>-<ADDON_VERSION>.nvda-addon を作る)。
+# GitHub Actions では tools/build.py がこれを呼ぶ。中身は scripts/build_addon.py:
+# 依存ライブラリ・BERT・音声合成モデルなどを配布元からダウンロードし (build/cache/ に保存)、アドオンを組み立てる。
+#
+#   scons                     ビルド
+#   scons dictionaries=1      AivisSpeech Engine の既定辞書も同梱する
+
+import os
+import subprocess
+import sys
+
+from SCons.Script import ARGUMENTS, AlwaysBuild, Default, Environment
+
+sys.dont_write_bytecode = True
+sys.path.insert(0, os.getcwd())
+import buildVars  # noqa: E402
+
+env = Environment(ENV=os.environ)
+addonFile = env.File("output/%s-%s.nvda-addon" % (buildVars.ADDON_NAME, buildVars.ADDON_VERSION))
+
+
+def buildAddon(target, source, env):
+	cmd = [sys.executable, os.path.join("scripts", "build_addon.py"), "--output", target[0].abspath]
+	if ARGUMENTS.get("dictionaries", "0") == "1":
+		cmd.append("--with-aivisspeech-dictionaries")
+	return subprocess.call(cmd)
+
+
+addon = env.Command(addonFile, [], buildAddon)
+# 入力 (ダウンロードするファイルなど) を SCons が追えないので、毎回組み立て直す
+AlwaysBuild(addon)
+Default(addon)
