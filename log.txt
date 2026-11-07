@@ -959,6 +959,20 @@ AIVIS Core ストリーミング化 作業ログ
   偽の wx が修正前のクラスでクラッシュを再現できなかったときも失敗にする (試験自体が意味を失うため)。
 - 手元で 3 つとも成功、わざと壊した .po では i18n check が失敗することを確認。実際の GitHub Actions では初回 push で確認。
 
+--------------------------------------------------
+2026-11-07 初回 push の GitHub Actions が失敗 → 修正
+--------------------------------------------------
+- ユーザーが初回コミットを push。checks (DASH 独自の点検) は成功、snapshot (Build and release for snapshot,
+  run 42369635726) が失敗。
+- 原因: GitHub Actions の Windows では Python の標準出力が cp1252 になる。サードパーティのファイルを初めて
+  ダウンロードするときの日本語の表示「(必要なファイルだけ)」で UnicodeEncodeError (scripts/third_party.py の fetch)。
+  手元は日本語の Windows (cp932) で、しかもダウンロード済みのキャッシュを使うのでこの表示が出ず、気づけなかった。
+- 修正: build_addon.py・third_party.py・i18n.py の最初で標準出力・標準エラーを UTF-8 にそろえる
+  (reconfigure、表せない文字はエスケープ)。
+- 確認: キャッシュの directml-license だけをよけて PYTHONIOENCODING=cp1252 でビルド → 修正前は同じ
+  UnicodeEncodeError で止まり、修正後は最後まで通る。ダウンロードし直したファイルは以前のものと同一。
+- この先 (リリースの作成、actlab.org への登録、組織のシークレット) は、修正を push して再実行しないと分からない。
+
 未確認・今後の課題 (2026-11-07 更新)
   公開前に必要なこと
   - 初回コミットと push (ユーザーが後で行う)。push で snapshot ワークフローが動くので、実際の GitHub Actions での

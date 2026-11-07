@@ -23,6 +23,13 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 ADDON = ROOT / "addon"
+
+# Windows の CI (cp1252) でも日本語の訳や警告を表示できるように、出力を UTF-8 にそろえる
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8", errors="backslashreplace")
+    except (AttributeError, ValueError):
+        pass
 LOCALE = ADDON / "locale"
 KEYWORDS = ("_", "N_")
 SKIP_DIRS = {"deps", "aivis_core", "__pycache__"}

@@ -29,6 +29,13 @@ import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+
+# GitHub Actions の Windows では標準出力が cp1252 になり、日本語の表示で UnicodeEncodeError になる。UTF-8 にそろえる
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8", errors="backslashreplace")
+    except (AttributeError, ValueError):
+        pass
 STAGE = ROOT / "build" / "addon"
 OUTPUT = ROOT / "output"
 sys.path.insert(0, str(Path(__file__).resolve().parent))
