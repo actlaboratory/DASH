@@ -38,8 +38,9 @@ DASH makes the AivisSpeech voice models and text processing usable directly insi
 
 ## Installation
 
-Open the nvda-addon file with NVDA to install it, then restart NVDA.
-In the "Speech" category of NVDA's settings, change the synthesizer to "DASH (AivisSpeech)".
+Open the add-on package (`.nvda-addon` file) to install it, then restart NVDA.
+You can also install it with the "Install from external source" button in the Add-on Store.
+In the Speech category of the NVDA Settings dialog, press the "Change..." button and choose "DASH (AivisSpeech)" in the Select Synthesizer dialog.
 
 When NVDA starts, loading the models takes about 10 seconds. Speech is slightly delayed until loading finishes.
 
@@ -65,7 +66,7 @@ You can add voice models published on AivisHub (https://hub.aivis-project.com/) 
    The file is saved after its content has been verified (SHA-256).
 4. When it finishes, you can choose the new voices with "Voice" in NVDA's speech settings right away (no restart needed).
 
-- Location: `aivis\models` in the NVDA configuration folder (usually `%APPDATA%\nvda`)
+- Location: `aivis\models` in the NVDA user configuration directory (usually `%APPDATA%\nvda`)
 - Removal: NVDA menu → "DASH" → "Remove voice models..." (models in `aivis\models` can be removed)
 - The first utterance right after switching voices takes about 2 to 3 seconds to load the model
   (only one model is loaded at a time to save memory).
@@ -152,7 +153,7 @@ and continuous reading, fast speech and the start of speech when you press keys 
 
 - CUDA acceleration requires an NVIDIA GPU (such as the GeForce RTX series) and the NVIDIA driver.
 - Installation requires a stable internet connection and about 2GB of free disk space.
-- It is saved in `aivis\cuda` in the NVDA configuration folder. You do not need to reinstall it when you update the add-on.
+- It is saved in `aivis\cuda` in the NVDA user configuration directory. You do not need to reinstall it when you update the add-on.
 - DASH uses an older onnxruntime and cuDNN 8, because the newer version (cuDNN 9) is slow with this model.
   For this reason, the RTX 50 series is not supported.
 - The first utterance after a period of silence may be slightly slower than on the CPU,
@@ -162,7 +163,7 @@ and continuous reading, fast speech and the start of speech when you press keys 
 
 - Readings and accents use the dictionary built into pyopenjtalk-plus.
 - If you have a user dictionary registered in AivisSpeech (`%APPDATA%\AivisSpeech-Engine\user.dic`), it is loaded automatically.
-- Dictionaries in OpenJTalk format (.dic) placed in `aivis\dictionaries\` in the NVDA configuration folder are also loaded.
+- Dictionaries in OpenJTalk format (.dic) placed in `aivis\dictionaries\` in the NVDA user configuration directory are also loaded.
 
 ### AivisSpeech dictionaries
 
@@ -174,7 +175,7 @@ personal names, station names, technical terms and more) makes DASH read text th
    (about 225MB). Each file is saved after its content has been verified (SHA-256).
 3. When it finishes, the dictionaries are used from the next utterance (no need to restart NVDA).
 
-- Location: `aivis\aivisspeech_dictionaries` in the NVDA configuration folder
+- Location: `aivis\aivisspeech_dictionaries` in the NVDA user configuration directory
   (separate from `aivis\dictionaries`, where you place your own dictionaries)
 - Removal: NVDA menu → "DASH" → "Remove AivisSpeech dictionaries..."
 - These dictionaries are included in the AivisSpeech Engine (LGPL-3.0) repository. Because the source and license
